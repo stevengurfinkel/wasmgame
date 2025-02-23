@@ -2,6 +2,7 @@ let ctx = null;
 let canvas = null;
 let pixels = null;
 let image = null;
+let on_mousedown = null;
 
 function onClick(event)
 {
@@ -25,6 +26,21 @@ function onClick(event)
     ctx.putImageData(image, 0, 0);
 }
 
+function onMousedown(e)
+{
+    console.log(on_mousedown(e.offsetX, e.offsetY));
+}
+
+function wasmInit()
+{
+    let wasm = new Uint8Array(game);
+    let imports = {};
+    WebAssembly.instantiate(wasm, imports).then(function(instance) {
+        on_mousedown = instance.instance.exports.on_mousedown;
+        canvas.addEventListener("mousedown", onMousedown);
+    });
+}
+
 function start(event)
 {
     if (ctx == null) {
@@ -35,7 +51,6 @@ function start(event)
     }
 
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = "#FFFFFF";
-    canvas.addEventListener("mousedown", onClick);
+    wasmInit();
 }
 
