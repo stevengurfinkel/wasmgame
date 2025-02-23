@@ -11,7 +11,7 @@ game.wasm: game.c
 	$(CC_WASM) $(CCFLAGS_WASM) $< $(LDFLAGS_WASM) -o $@
 
 game.js: game.wasm embed
-	./embed game < $< > $@
+	./embed wasmBinary < $< > $@
 
 embed: embed.c
 	gcc $(CCFLAGS) $< -o $@

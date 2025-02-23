@@ -18,10 +18,25 @@ static int height = 0;
 
 void set_image_buffer(pixel_t *pixels);
 void *memory_grow_pages(size_t bytes);
+void log_int(int value);
+void log_str_with_size(const char *msg, size_t size);
 
-void globals_init(pixel_t *p, int w, int h)
+size_t strlen(const char *s)
 {
-    pixels = p;
+    size_t i = 0;
+    while (s[i] != '\0') {
+        i++;
+    }
+    return i;
+}
+
+void log_str(const char *msg)
+{
+    log_str_with_size(msg, strlen(msg));
+}
+
+void globals_init(int w, int h)
+{
     width = w;
     height = h;
 
@@ -29,6 +44,9 @@ void globals_init(pixel_t *p, int w, int h)
     size_t page_count = (size + PAGE_SIZE) / PAGE_SIZE;
     pixels = memory_grow_pages(page_count);
     set_image_buffer(pixels);
+    log_str("Allocating memory for with and height...");
+    log_int(width);
+    log_int(height);
 }
 
 void *memset(void *s, int c, size_t n)
