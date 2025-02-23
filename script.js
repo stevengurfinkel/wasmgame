@@ -5,24 +5,24 @@ let image = null;
 
 function onClick(event)
 {
-	for (let i = 0; i < canvas.height; i++) {
-		for (let j = 0; j < canvas.width; j++) {
-			let midX = j - event.offsetX;
-			let midY = i - event.offsetY;
+    for (let i = 0; i < canvas.height; i++) {
+        for (let j = 0; j < canvas.width; j++) {
+            let midX = j - event.offsetX;
+            let midY = i - event.offsetY;
 
-			let fill = 0;
-			if (midX * midX + midY * midY < 240) {
-				fill = 255;
-			}
-			
-			for (let ch = 0; ch < 3; ch++) {
-				pixels[4 * (i * canvas.width + j) + ch] = fill;
-			}
-			pixels[4 * (i * canvas.width + j) + 3] = 255;
-		}
-	}
+            let fill = 0;
+            if (midX * midX + midY * midY < 240) {
+                fill = 255;
+            }
 
-	ctx.putImageData(image, 0, 0);
+            for (let ch = 0; ch < 3; ch++) {
+                pixels[4 * (i * canvas.width + j) + ch] = fill;
+            }
+            pixels[4 * (i * canvas.width + j) + 3] = 255;
+        }
+    }
+
+    ctx.putImageData(image, 0, 0);
 }
 
 function start(event)
@@ -30,12 +30,12 @@ function start(event)
     if (ctx == null) {
         canvas = document.getElementById("canvas");
         ctx = canvas.getContext("2d");
-		pixels = new Uint8ClampedArray(4 * canvas.width * canvas.height); 
-		image = new ImageData(pixels, canvas.width, canvas.height);
+        pixels = new Uint8ClampedArray(4 * canvas.width * canvas.height);
+        image = new ImageData(pixels, canvas.width, canvas.height);
     }
 
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-	ctx.fillStyle = "#FFFFFF";
-	canvas.addEventListener("mousedown", onClick);
+    ctx.fillStyle = "#FFFFFF";
+    canvas.addEventListener("mousedown", onClick);
 }
 
