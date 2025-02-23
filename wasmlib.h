@@ -19,6 +19,7 @@ int round_up(float f);
 #define KEY_CODE_ARROW_UP 38
 #define KEY_CODE_ARROW_RIGHT 39
 #define KEY_CODE_ARROW_DOWN 40
+#define KEY_CODE_COUNT 256
 
 typedef struct pixel_st
 {
@@ -31,6 +32,7 @@ typedef struct pixel_st
 void set_image_buffer(pixel_t *pixels);
 void *memory_grow_pages(size_t bytes);
 void log_int(long value);
+void log_float(float value);
 void log_i64(int64_t value);
 void log_str_with_size(const char *msg, size_t size);
 void set_timer_interval(int ms);

@@ -3,6 +3,9 @@
 #include <stdbool.h>
 #include "wasmlib.h"
 
+#define FRAME_RATE 50
+#define LOG_INTERVAL 64
+
 typedef struct image_st
 {
     pixel_t *pixels;
@@ -12,6 +15,7 @@ typedef struct image_st
 
 typedef struct keyboard_st
 {
+    bool is_pressed[KEY_CODE_COUNT];
     int x_dir;
     int y_dir;
 } keyboard_t;
@@ -39,6 +43,7 @@ typedef struct globals_st
     image_t image;
     circle_t circle;
     keyboard_t keyboard;
+    uint64_t frameId;
 } globals_t;
 
 static globals_t globals = {0};
@@ -69,7 +74,7 @@ void image_init(image_t *image, int width, int height)
 
 void globals_init(int width, int height)
 {
-    set_timer_interval(20);
+    set_timer_interval(1000 / FRAME_RATE);
     image_init(&globals.image, width, height);
     circle_init(&globals.circle, width / 2, height / 2, 120);
 }
@@ -110,34 +115,24 @@ void draw_circle(image_t *img, circle_t *c)
     }
 }
 
-void keyboard_update_dir(keyboard_t *k, int key_code, int sign)
+void keyboard_calc_dir(keyboard_t *k)
 {
-    switch (key_code) {
-        case KEY_CODE_ARROW_LEFT:
-            k->x_dir -= sign;
-            break;
-        case KEY_CODE_ARROW_UP:
-            k->y_dir -= sign;
-            break;
-        case KEY_CODE_ARROW_RIGHT:
-            k->x_dir += sign;
-            break;
-        case KEY_CODE_ARROW_DOWN:
-            k->y_dir += sign;
-            break;
-        default:
-            break;
-    }
+    k->x_dir = k->is_pressed[KEY_CODE_ARROW_RIGHT] - k->is_pressed[KEY_CODE_ARROW_LEFT];
+    k->y_dir = k->is_pressed[KEY_CODE_ARROW_DOWN] - k->is_pressed[KEY_CODE_ARROW_UP];
 }
 
 void on_keydown(int key_code)
 {
-    keyboard_update_dir(&globals.keyboard, key_code, 1);
+    keyboard_t *k = &globals.keyboard;
+    k->is_pressed[key_code] = true;
+    keyboard_calc_dir(&globals.keyboard);
 }
 
 void on_keyup(int key_code)
 {
-    keyboard_update_dir(&globals.keyboard, key_code, -1);
+    keyboard_t *k = &globals.keyboard;
+    k->is_pressed[key_code] = false;
+    keyboard_calc_dir(&globals.keyboard);
 }
 
 void circle_dir_detect_oob(float *pos, float *dpos, float r, int limit)
@@ -188,6 +183,10 @@ void on_timer(float now)
                  .width = 20,
                  .height = 20 };
     draw_rectangle(img, &r);
+
+    if (globals.frameId % LOG_INTERVAL == 0) {
+    }
+    globals.frameId++;
 }
 
 void on_mousedown(int x, int y)

@@ -88,6 +88,7 @@ function wasmInit()
     let imports = {"env": {"memory_grow_pages" : wasmMemoryGrow,
                            "set_image_buffer": wasmSetImageBuffer,
                            "set_timer_interval": wasmSetTimerInterval,
+                           "log_float": console.log,
                            "log_int": console.log,
                            "log_i64": console.log,
                            "log_str_with_size": wasmLogStrWithSize}};
