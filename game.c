@@ -1,39 +1,14 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include "wasmlib.h"
 
 #define PAGE_SIZE (64 * 1024)
 
-typedef struct pixel_st
-{
-    uint8_t r;
-    uint8_t g;
-    uint8_t b;
-    uint8_t a;
-} pixel_t;
 
 static pixel_t *pixels = NULL;
 static int width = 0;
 static int height = 0;
-
-void set_image_buffer(pixel_t *pixels);
-void *memory_grow_pages(size_t bytes);
-void log_int(int value);
-void log_str_with_size(const char *msg, size_t size);
-
-size_t strlen(const char *s)
-{
-    size_t i = 0;
-    while (s[i] != '\0') {
-        i++;
-    }
-    return i;
-}
-
-void log_str(const char *msg)
-{
-    log_str_with_size(msg, strlen(msg));
-}
 
 void globals_init(int w, int h)
 {
@@ -47,14 +22,6 @@ void globals_init(int w, int h)
     log_str("Allocating memory for with and height...");
     log_int(width);
     log_int(height);
-}
-
-void *memset(void *s, int c, size_t n)
-{
-    for (size_t i = 0; i < n; i++) {
-        ((char *)s)[i] = c;
-    }
-    return s;
 }
 
 void on_mousedown(int x, int y)
