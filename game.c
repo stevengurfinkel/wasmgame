@@ -31,7 +31,6 @@ void globals_init(pixel_t *p, int w, int h)
     set_image_buffer(pixels);
 }
 
-
 void *memset(void *s, int c, size_t n)
 {
     for (size_t i = 0; i < n; i++) {
@@ -40,16 +39,20 @@ void *memset(void *s, int c, size_t n)
     return s;
 }
 
-int color = 0;
-
 void on_mousedown(int x, int y)
 {
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
             pixel_t *p = &pixels[i * width + j];
-            p->r = color;
+            int ry = i - y;
+            int rx = j - x;
+
+            uint8_t color = 0;
+            if (rx * rx + ry * ry < 120 * 120) {
+                color = 255;
+            }
+            p->r = p->b = p->g = color;
             p->a = 255;
         }
     }
-    color += 10;
 }
