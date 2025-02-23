@@ -1,43 +1,44 @@
 let ctx = null;
 let canvas = null;
-let pixels = null;
+let pixels = 0;
 let image = null;
-let on_mousedown = null;
 
-function onClick(event)
-{
-    for (let i = 0; i < canvas.height; i++) {
-        for (let j = 0; j < canvas.width; j++) {
-            let midX = j - event.offsetX;
-            let midY = i - event.offsetY;
-
-            let fill = 0;
-            if (midX * midX + midY * midY < 240) {
-                fill = 255;
-            }
-
-            for (let ch = 0; ch < 3; ch++) {
-                pixels[4 * (i * canvas.width + j) + ch] = fill;
-            }
-            pixels[4 * (i * canvas.width + j) + 3] = 255;
-        }
-    }
-
-    ctx.putImageData(image, 0, 0);
-}
+let wfns = { mem: null,
+             on_mousedown: null,
+             globals_init: null};
 
 function onMousedown(e)
 {
-    console.log(on_mousedown(e.offsetX, e.offsetY));
+    wfns.on_mousedown(e.offsetX, e.offsetY);
+    let pixelData = new Uint8ClampedArray(wfns.mem.buffer, pixels, 4 * canvas.width * canvas.height);
+    image = new ImageData(pixelData, canvas.width, canvas.height);
+    ctx.putImageData(image, 0, 0);
+}
+
+function wasmMemoryGrow(page_count)
+{
+    let len = wfns.mem.buffer.byteLength;
+    wfns.mem.grow(Math.ceil(page_count));
+    return len;
+}
+
+function wasmSetImageBuffer(ptr)
+{
+    pixels = ptr;
+    console.log(pixels);
 }
 
 function wasmInit()
 {
     let wasm = new Uint8Array(game);
-    let imports = {};
-    WebAssembly.instantiate(wasm, imports).then(function(instance) {
-        on_mousedown = instance.instance.exports.on_mousedown;
+    let imports = {"env": {"memory_grow_pages" : wasmMemoryGrow,
+                           "set_image_buffer": wasmSetImageBuffer}};
+    WebAssembly.instantiate(wasm, imports).then(function(inst) {
+        wfns.mem = inst.instance.exports.memory;
+        wfns.on_mousedown = inst.instance.exports.on_mousedown;
+        wfns.globals_init = inst.instance.exports.globals_init;
         canvas.addEventListener("mousedown", onMousedown);
+        wfns.globals_init(0, canvas.width, canvas.height);
     });
 }
 
