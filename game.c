@@ -43,6 +43,8 @@ typedef struct globals_st
     image_t image;
     circle_t circle;
     keyboard_t keyboard;
+    pixel_t color;
+    int collision_count;
     uint64_t frameId;
 } globals_t;
 
@@ -53,6 +55,14 @@ void circle_init(circle_t *c, float x, float y, float r)
     c->x = x;
     c->y = y;
     c->r = r;
+}
+
+void pixel_init(pixel_t *p, int r, int g, int b, int a)
+{
+    p->r = r;
+    p->g = g;
+    p->b = b;
+    p->a = a;
 }
 
 void image_init(image_t *image, int width, int height)
@@ -77,10 +87,12 @@ void globals_init(int width, int height)
     set_timer_interval(1000 / FRAME_RATE);
     image_init(&globals.image, width, height);
     circle_init(&globals.circle, width / 2, height / 2, 120);
+    pixel_init(&globals.color, 255, 255, 255, 255);
 }
 
-void draw_rectangle(image_t *img, rect_t *rect)
+void draw_rectangle(image_t *img, rect_t *rect, pixel_t *pcolor)
 {
+    pixel_t color = *pcolor;
     int x_lo = MAX(0, round_down(rect->x));
     int x_hi = MIN(img->width, round_up(rect->x + rect->width));
 
@@ -90,27 +102,40 @@ void draw_rectangle(image_t *img, rect_t *rect)
     for (int i = y_lo; i < y_hi; i++) {
         for (int j = x_lo; j < x_hi; j++) {
             pixel_t *p = &img->pixels[i * img->width + j];
-            p->r = p->g = p->b = 0;
+            *p = color;
         }
     }
 }
 
-void draw_circle(image_t *img, circle_t *c)
+void image_clear(image_t *img)
 {
+    pixel_t p = { .r = 0, .g = 0, .b = 0, .a = 255 };
+    for (int i = 0; i < img->width * img->height; i++) {
+        img->pixels[i] = p;
+    }
+}
+
+void draw_circle(image_t *img, circle_t *c, pixel_t *pcolor)
+{
+    pixel_t color = *pcolor;
+
+    int x_lo = MAX(0, round_down(c->x - c->r));
+    int x_hi = MIN(img->width, round_up(c->x + c->r));
+
+    int y_lo = MAX(0, round_down(c->y - c->r));
+    int y_hi = MIN(img->height, round_up(c->y + c->r));
+
     float r2 = c->r * c->r;
 
-    for (int i = 0; i < img->height; i++) {
+    for (int i = y_lo; i < y_hi; i++) {
         float y2 = (i - c->y) * (i - c->y);
 
-        for (int j = 0; j < img->width; j++) {
+        for (int j = x_lo; j < x_hi; j++) {
             float x2 = (j - c->x) * (j - c->x);
             pixel_t *p = &img->pixels[i * img->width + j];
-
-            uint8_t color = 0;
             if (x2 + y2 < r2) {
-                color = 255;
+                *p = color;
             }
-            p->r = p->b = p->g = color;
         }
     }
 }
@@ -135,28 +160,43 @@ void on_keyup(int key_code)
     keyboard_calc_dir(&globals.keyboard);
 }
 
-void circle_dir_detect_oob(float *pos, float *dpos, float r, int limit)
+bool circle_dir_detect_oob(float *pos, float *dpos, float r, int limit)
 {
     float p = *pos;
     float d = *dpos;
+    bool is_oob = false;
 
     if (p - r < 0) {
         p = r;
         d *= -1;
+        is_oob = true;
     }
     else if (p + r > limit) {
         p = limit - r;
         d *= -1;
+        is_oob = true;
     }
 
     *pos = p;
     *dpos = d;
+    return is_oob;
 }
 
-void circle_detect_oob(circle_t *circle, image_t *image)
+bool circle_detect_oob(circle_t *circle, image_t *image)
 {
-    circle_dir_detect_oob(&circle->x, &circle->dx, circle->r, image->width);
-    circle_dir_detect_oob(&circle->y, &circle->dy, circle->r, image->height);
+    bool x = circle_dir_detect_oob(&circle->x, &circle->dx, circle->r, image->width);
+    bool y = circle_dir_detect_oob(&circle->y, &circle->dy, circle->r, image->height);
+    return x || y;
+}
+
+void change_color(pixel_t *p, int count)
+{
+    int id = count & 0x3F;
+    log_int(id);
+    p->r = (id & 0x3) << 6;
+    p->g = (id & 0xC) << 4;
+    p->b = (id & 0x30) << 2;
+    p->a = 0xFF;
 }
 
 void on_timer(float now)
@@ -175,14 +215,21 @@ void on_timer(float now)
     c->y += c->dy;
 
     image_t *img = &globals.image;
-    circle_detect_oob(c, img);
+    if (circle_detect_oob(c, img)) {
+        globals.collision_count++;
+        change_color(&globals.color, globals.collision_count);
+    }
 
-    draw_circle(img, c);
+    image_clear(img);
+    draw_circle(img, c, &globals.color);
     rect_t r = { .x = c->x - 10,
                  .y = c->y - 10,
                  .width = 20,
                  .height = 20 };
-    draw_rectangle(img, &r);
+
+    pixel_t white;
+    pixel_init(&white, 255, 255, 255, 255);
+    draw_rectangle(img, &r, &white);
 
     if (globals.frameId % LOG_INTERVAL == 0) {
     }
