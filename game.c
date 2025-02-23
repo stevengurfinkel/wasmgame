@@ -10,6 +10,9 @@ static pixel_t *pixels = NULL;
 static int width = 0;
 static int height = 0;
 
+static int circle_x = 0;
+static int circle_y = 0;
+
 void globals_init(int w, int h)
 {
     width = w;
@@ -24,7 +27,7 @@ void globals_init(int w, int h)
     log_int(height);
 }
 
-void on_mousedown(int x, int y)
+void draw_circle(int x, int y)
 {
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
@@ -40,4 +43,36 @@ void on_mousedown(int x, int y)
             p->a = 255;
         }
     }
+}
+
+void on_keydown(int key_code)
+{
+    int step = 8;
+    switch (key_code) {
+        case KEY_CODE_ARROW_LEFT:
+            circle_x -= step;
+            break;
+        case KEY_CODE_ARROW_UP:
+            circle_y -= step;
+            break;
+        case KEY_CODE_ARROW_RIGHT:
+            circle_x += step;
+            break;
+        case KEY_CODE_ARROW_DOWN:
+            circle_y += step;
+            break;
+        default:
+            break;
+    }
+
+    circle_x = MIN(width, MAX(0, circle_x));
+    circle_y = MIN(height, MAX(0, circle_y));
+    draw_circle(circle_x, circle_y);
+}
+
+void on_mousedown(int x, int y)
+{
+    circle_x = x;
+    circle_y = y;
+    draw_circle(x, y);
 }

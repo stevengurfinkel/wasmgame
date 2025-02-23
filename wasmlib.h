@@ -5,9 +5,17 @@ size_t strlen(const char *s);
 void *memset(void *s, int c, size_t n);
 
 // Custom
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+
 void log_str(const char *msg);
 
 // Implemented in javascript
+
+#define KEY_CODE_ARROW_LEFT 37
+#define KEY_CODE_ARROW_UP 38
+#define KEY_CODE_ARROW_RIGHT 39
+#define KEY_CODE_ARROW_DOWN 40
 
 typedef struct pixel_st
 {

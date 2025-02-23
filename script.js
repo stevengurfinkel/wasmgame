@@ -3,14 +3,27 @@ let canvas = null;
 
 let wasm = { mem: null,
              pixelOffset: 0,
+             on_keydown: null,
              on_mousedown: null,
              globals_init: null};
+
+function wasmPaint()
+{
+    let pixels = new Uint8ClampedArray(wasm.mem.buffer, wasm.pixelOffset, 4 * canvas.width * canvas.height);
+    ctx.putImageData(new ImageData(pixels, canvas.width, canvas.height), 0, 0);
+}
 
 function onMousedown(e)
 {
     wasm.on_mousedown(e.offsetX, e.offsetY);
-    let pixels = new Uint8ClampedArray(wasm.mem.buffer, wasm.pixelOffset, 4 * canvas.width * canvas.height);
-    ctx.putImageData(new ImageData(pixels, canvas.width, canvas.height), 0, 0);
+    wasmPaint();
+}
+
+function onKeydown(e)
+{
+    wasm.on_keydown(e.keyCode);
+    wasmPaint();
+    e.preventDefault();
 }
 
 function wasmMemoryGrow(page_count)
@@ -28,9 +41,11 @@ function wasmSetImageBuffer(ptr)
 function wasmInitWithInst(inst)
 {
     wasm.mem = inst.instance.exports.memory;
+    wasm.on_keydown = inst.instance.exports.on_keydown;
     wasm.on_mousedown = inst.instance.exports.on_mousedown;
     wasm.globals_init = inst.instance.exports.globals_init;
     canvas.addEventListener("mousedown", onMousedown);
+    document.addEventListener("keydown", onKeydown);
     wasm.globals_init(canvas.width, canvas.height);
 }
 
