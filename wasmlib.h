@@ -11,6 +11,7 @@ void *memset(void *s, int c, size_t n);
 void log_str(const char *msg);
 
 // Implemented in javascript
+#define PAGE_SIZE (64 * 1024)
 
 #define KEY_CODE_ARROW_LEFT 37
 #define KEY_CODE_ARROW_UP 38
@@ -27,5 +28,7 @@ typedef struct pixel_st
 
 void set_image_buffer(pixel_t *pixels);
 void *memory_grow_pages(size_t bytes);
-void log_int(int value);
+void log_int(long value);
+void log_i64(int64_t value);
 void log_str_with_size(const char *msg, size_t size);
+void set_timer_interval(int ms);

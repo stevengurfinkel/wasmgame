@@ -3,40 +3,77 @@
 #include <stdbool.h>
 #include "wasmlib.h"
 
-#define PAGE_SIZE (64 * 1024)
-
-
-static pixel_t *pixels = NULL;
-static int width = 0;
-static int height = 0;
-
-static int circle_x = 0;
-static int circle_y = 0;
-
-void globals_init(int w, int h)
+typedef struct image_st
 {
-    width = w;
-    height = h;
+    pixel_t *pixels;
+    int width;
+    int height;
+} image_t;
 
-    size_t size = w * h * sizeof pixels[0];
-    size_t page_count = (size + PAGE_SIZE) / PAGE_SIZE;
-    pixels = memory_grow_pages(page_count);
-    set_image_buffer(pixels);
-    log_str("Allocating memory for with and height...");
-    log_int(width);
-    log_int(height);
+typedef struct keyboard_st
+{
+    int x_dir;
+    int y_dir;
+} keyboard_t;
+
+typedef struct circle_st
+{
+    int x;
+    int y;
+    int r;
+
+    int dx;
+    int dy;
+} circle_t;
+
+typedef struct globals_st
+{
+    image_t image;
+    circle_t circle;
+    keyboard_t keyboard;
+} globals_t;
+
+static globals_t globals = {0};
+
+void circle_init(circle_t *c, int x, int y, int r)
+{
+    c->x = x;
+    c->y = y;
+    c->r = r;
 }
 
-void draw_circle(int x, int y)
+void image_init(image_t *image, int width, int height)
 {
-    for (int i = 0; i < height; i++) {
-        for (int j = 0; j < width; j++) {
-            pixel_t *p = &pixels[i * width + j];
-            int ry = i - y;
-            int rx = j - x;
+    image->width = width;
+    image->height = height;
+
+    size_t size = width * height * sizeof image->pixels[0];
+    size_t page_count = (size + PAGE_SIZE) / PAGE_SIZE;
+
+    image->pixels = memory_grow_pages(page_count);
+    set_image_buffer(image->pixels);
+}
+
+void globals_init(int width, int height)
+{
+    set_timer_interval(20);
+    image_init(&globals.image, width, height);
+    circle_init(&globals.circle, width / 2, height / 2, 120);
+}
+
+void draw_circle(image_t *img, circle_t *c)
+{
+    int r2 = c->r * c->r;
+
+    for (int i = 0; i < img->height; i++) {
+        int y2 = (i - c->y) * (i - c->y);
+
+        for (int j = 0; j < img->width; j++) {
+            int x2 = (j - c->x) * (j - c->x);
+            pixel_t *p = &img->pixels[i * img->width + j];
 
             uint8_t color = 0;
-            if (rx * rx + ry * ry < 120 * 120) {
+            if (x2 + y2 < r2) {
                 color = 255;
             }
             p->r = p->b = p->g = color;
@@ -47,32 +84,53 @@ void draw_circle(int x, int y)
 
 void on_keydown(int key_code)
 {
-    int step = 8;
+    keyboard_t *k = &globals.keyboard;
+    k->x_dir = 0;
+    k->y_dir = 0;
+
     switch (key_code) {
         case KEY_CODE_ARROW_LEFT:
-            circle_x -= step;
+            k->x_dir = -1;
             break;
         case KEY_CODE_ARROW_UP:
-            circle_y -= step;
+            k->y_dir = -1;
             break;
         case KEY_CODE_ARROW_RIGHT:
-            circle_x += step;
+            k->x_dir = 1;
             break;
         case KEY_CODE_ARROW_DOWN:
-            circle_y += step;
+            k->y_dir = 1;
             break;
         default:
             break;
     }
+}
 
-    circle_x = MIN(width, MAX(0, circle_x));
-    circle_y = MIN(height, MAX(0, circle_y));
-    draw_circle(circle_x, circle_y);
+void on_keyup(int key_code)
+{
+    keyboard_t *k = &globals.keyboard;
+    k->x_dir = 0;
+    k->y_dir = 0;
+}
+
+void on_timer(int64_t now)
+{
+    circle_t *c = &globals.circle;
+    keyboard_t *k = &globals.keyboard;
+
+    c->dx += k->x_dir;
+    c->dy += k->y_dir;
+
+    c->x += c->dx / 32;
+    c->y += c->dy / 32;
+
+    image_t *img = &globals.image;
+    c->x = MIN(img->width, MAX(0, c->x));
+    c->y = MIN(img->height, MAX(0, c->y));
+
+    draw_circle(img, c);
 }
 
 void on_mousedown(int x, int y)
 {
-    circle_x = x;
-    circle_y = y;
-    draw_circle(x, y);
 }
