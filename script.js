@@ -46,7 +46,7 @@ function wasmSetTimerInterval(value)
 
 function onInterval()
 {
-    wasm.on_timer(BigInt(Math.round(performance.now() * 1000)));
+    wasm.on_timer(performance.now());
     wasmPaint();
 }
 

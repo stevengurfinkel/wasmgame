@@ -9,6 +9,8 @@ void *memset(void *s, int c, size_t n);
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
 void log_str(const char *msg);
+int round_down(float f);
+int round_up(float f);
 
 // Implemented in javascript
 #define PAGE_SIZE (64 * 1024)

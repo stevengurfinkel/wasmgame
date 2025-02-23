@@ -20,6 +20,17 @@ void *memset(void *s, int c, size_t n)
     return s;
 }
 
+int round_down(float f)
+{
+    return (int)f;
+}
+
+int round_up(float f)
+{
+    int i = round_down(f);
+    return i + (i != f);
+}
+
 void log_str(const char *msg)
 {
     log_str_with_size(msg, strlen(msg));
