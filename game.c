@@ -39,8 +39,7 @@ typedef struct cirle_sprite_st
 {
     circle_t circle;
     pixel_t color;
-    float vel_x;
-    float vel_y;
+    float vel[DIM];
     bool hidden;
 } circle_sprite_t;
 
@@ -219,8 +218,8 @@ bool circle_dir_detect_oob(float *pos, float *dpos, float r, int limit)
 bool sprite_detect_oob(circle_sprite_t *sprite)
 {
     circle_t *circle = &sprite->circle;
-    bool x = circle_dir_detect_oob(&circle->pos[X], &sprite->vel_x, circle->r, globals.image.size[X]);
-    bool y = circle_dir_detect_oob(&circle->pos[Y], &sprite->vel_y, circle->r, globals.image.size[Y]);
+    bool x = circle_dir_detect_oob(&circle->pos[X], &sprite->vel[X], circle->r, globals.image.size[X]);
+    bool y = circle_dir_detect_oob(&circle->pos[Y], &sprite->vel[Y], circle->r, globals.image.size[Y]);
     return x || y;
 }
 
@@ -255,19 +254,19 @@ void change_color(pixel_t *p, int count)
 
 bool circle_sprite_move(circle_sprite_t *sprite)
 {
-    float vel2 = sprite->vel_x * sprite->vel_x + sprite->vel_y * sprite->vel_y;
+    float vel2 = sprite->vel[X] * sprite->vel[X] + sprite->vel[Y] * sprite->vel[Y];
     if (vel2 > 0) {
         float speed = sqrtf(vel2);
-        float norm_x = sprite->vel_x / speed;
-        float norm_y = sprite->vel_y / speed;
+        float norm_x = sprite->vel[X] / speed;
+        float norm_y = sprite->vel[Y] / speed;
 
-        sprite->vel_x -= DRAG_COEF * norm_x * vel2;
-        sprite->vel_y -= DRAG_COEF * norm_y * vel2;
+        sprite->vel[X] -= DRAG_COEF * norm_x * vel2;
+        sprite->vel[Y] -= DRAG_COEF * norm_y * vel2;
     }
 
     circle_t *circle = &sprite->circle;
-    circle->pos[X] += sprite->vel_x;
-    circle->pos[Y] += sprite->vel_y;
+    circle->pos[X] += sprite->vel[X];
+    circle->pos[Y] += sprite->vel[Y];
 
     return sprite_detect_oob(sprite);
 }
@@ -275,8 +274,8 @@ bool circle_sprite_move(circle_sprite_t *sprite)
 void player_move(circle_sprite_t *player)
 {
     keyboard_t *keys = &globals.keyboard;
-    player->vel_x += PLAYER_ACCEL * keys->dir[X];
-    player->vel_y += PLAYER_ACCEL * keys->dir[Y];
+    player->vel[X] += PLAYER_ACCEL * keys->dir[X];
+    player->vel[Y] += PLAYER_ACCEL * keys->dir[Y];
 }
 
 void exchange_float(float *a, float *b)
@@ -294,8 +293,8 @@ void sprite_check_collision(circle_sprite_t *s1, circle_sprite_t *s2)
     float r = s1->circle.r + s2->circle.r;
 
     if (dx * dx + dy * dy < r * r) {
-        exchange_float(&s1->vel_x, &s2->vel_x);
-        exchange_float(&s1->vel_y, &s2->vel_y);
+        exchange_float(&s1->vel[X], &s2->vel[X]);
+        exchange_float(&s1->vel[Y], &s2->vel[Y]);
     }
 }
 
