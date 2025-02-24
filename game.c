@@ -5,9 +5,10 @@
 
 #define FRAME_RATE 50
 #define LOG_INTERVAL 64
+#define ONE_OVER_ROOT_TWO 0.7071067811865475
 
 #define DRAG_COEF 0.0005
-#define PLAYER_ACCEL 0.03
+#define PLAYER_ACCEL 0.08
 
 #define SPRITE_RADIUS 24
 #define SPRITE_DIM 6
@@ -26,7 +27,7 @@ typedef struct image_st
 typedef struct keyboard_st
 {
     bool is_pressed[KEY_CODE_COUNT];
-    int dir[DIM];
+    float dir[DIM];
 } keyboard_t;
 
 typedef struct circle_st
@@ -175,6 +176,10 @@ void keyboard_calc_dir(keyboard_t *k)
 {
     k->dir[X] = k->is_pressed[KEY_CODE_ARROW_RIGHT] - k->is_pressed[KEY_CODE_ARROW_LEFT];
     k->dir[Y] = k->is_pressed[KEY_CODE_ARROW_DOWN] - k->is_pressed[KEY_CODE_ARROW_UP];
+    if (k->dir[X] != 0 && k->dir[Y] != 0) {
+        k->dir[X] *= ONE_OVER_ROOT_TWO;
+        k->dir[Y] *= ONE_OVER_ROOT_TWO;
+    }
 }
 
 void on_keydown(int key_code)
