@@ -31,8 +31,7 @@ typedef struct keyboard_st
 
 typedef struct circle_st
 {
-    float x;
-    float y;
+    float pos[DIM];
     float r;
 } circle_t;
 
@@ -70,8 +69,8 @@ void spectral_color(pixel_t *p, int bits, int idx);
 
 void circle_init(circle_t *c, float x, float y, float r)
 {
-    c->x = x;
-    c->y = y;
+    c->pos[X] = x;
+    c->pos[Y] = y;
     c->r = r;
 }
 
@@ -154,19 +153,19 @@ void draw_circle(image_t *img, circle_t *c, pixel_t *pcolor)
 {
     pixel_t color = *pcolor;
 
-    int x_lo = MAX(0, round_down(c->x - c->r));
-    int x_hi = MIN(img->size[X], round_up(c->x + c->r));
+    int x_lo = MAX(0, round_down(c->pos[X] - c->r));
+    int x_hi = MIN(img->size[X], round_up(c->pos[X] + c->r));
 
-    int y_lo = MAX(0, round_down(c->y - c->r));
-    int y_hi = MIN(img->size[Y], round_up(c->y + c->r));
+    int y_lo = MAX(0, round_down(c->pos[Y] - c->r));
+    int y_hi = MIN(img->size[Y], round_up(c->pos[Y] + c->r));
 
     float r2 = c->r * c->r;
 
     for (int i = y_lo; i < y_hi; i++) {
-        float y2 = (i - c->y) * (i - c->y);
+        float y2 = (i - c->pos[Y]) * (i - c->pos[Y]);
 
         for (int j = x_lo; j < x_hi; j++) {
-            float x2 = (j - c->x) * (j - c->x);
+            float x2 = (j - c->pos[X]) * (j - c->pos[X]);
             pixel_t *p = &img->pixels[i * img->size[X] + j];
             if (x2 + y2 < r2) {
                 *p = color;
@@ -220,8 +219,8 @@ bool circle_dir_detect_oob(float *pos, float *dpos, float r, int limit)
 bool sprite_detect_oob(circle_sprite_t *sprite)
 {
     circle_t *circle = &sprite->circle;
-    bool x = circle_dir_detect_oob(&circle->x, &sprite->vel_x, circle->r, globals.image.size[X]);
-    bool y = circle_dir_detect_oob(&circle->y, &sprite->vel_y, circle->r, globals.image.size[Y]);
+    bool x = circle_dir_detect_oob(&circle->pos[X], &sprite->vel_x, circle->r, globals.image.size[X]);
+    bool y = circle_dir_detect_oob(&circle->pos[Y], &sprite->vel_y, circle->r, globals.image.size[Y]);
     return x || y;
 }
 
@@ -267,8 +266,8 @@ bool circle_sprite_move(circle_sprite_t *sprite)
     }
 
     circle_t *circle = &sprite->circle;
-    circle->x += sprite->vel_x;
-    circle->y += sprite->vel_y;
+    circle->pos[X] += sprite->vel_x;
+    circle->pos[Y] += sprite->vel_y;
 
     return sprite_detect_oob(sprite);
 }
@@ -289,8 +288,8 @@ void exchange_float(float *a, float *b)
 
 void sprite_check_collision(circle_sprite_t *s1, circle_sprite_t *s2)
 {
-    float dx = s1->circle.x - s2->circle.x;
-    float dy = s1->circle.y - s2->circle.y;
+    float dx = s1->circle.pos[X] - s2->circle.pos[X];
+    float dy = s1->circle.pos[Y] - s2->circle.pos[Y];
 
     float r = s1->circle.r + s2->circle.r;
 
