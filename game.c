@@ -270,46 +270,28 @@ void player_move(circle_sprite_t *player)
     player->vel[Y] += PLAYER_ACCEL * keys->dir[Y];
 }
 
-void exchange_float(float *a, float *b)
+void circle_sprite_collide(circle_sprite_t *s1, circle_sprite_t *s2)
 {
-    float f = *a;
-    *a = *b;
-    *b = f;
-}
-
-void sprite_collide(const circle_sprite_t *self, const circle_sprite_t *other, float dist_sq, float *vel_out)
-{
-    float v_dot_p = 0; // difference in velocity * difference in position
-    float p_diff[DIM]; // difference in position
+    float dpos[DIM];
+    float dist_sq = 0;
+    float dr = s1->circle.r + s2->circle.r;
 
     for (int i = 0; i < DIM; i++) {
-        float v_diff = self->vel[i] - other->vel[i];
-        p_diff[i] = self->circle.pos[i] - other->circle.pos[i];
-        v_dot_p += v_diff * p_diff[i];
+        dpos[i] = s1->circle.pos[i] - s2->circle.pos[i];
+        dist_sq += dpos[i] * dpos[i];
     }
 
-    for (int i = 0; i < DIM; i++) {
-        vel_out[i] = self->vel[i] - v_dot_p * p_diff[i] / dist_sq;
-    }
-}
+    if (dist_sq < dr * dr) {
+        float v_dot_p = 0;
+        for (int i = 0; i < DIM; i++) {
+            v_dot_p += dpos[i] * (s1->vel[i] - s2->vel[i]);
+        }
 
-void sprite_check_collision(circle_sprite_t *s1, circle_sprite_t *s2)
-{
-    float dx = s1->circle.pos[X] - s2->circle.pos[X];
-    float dy = s1->circle.pos[Y] - s2->circle.pos[Y];
-
-    float dist_sq = dx * dx + dy * dy;
-    float r = s1->circle.r + s2->circle.r;
-
-    if (dist_sq < r * r) {
-        float v1[DIM];
-        float v2[DIM];
-        sprite_collide(s1, s2, dist_sq, v1);
-        sprite_collide(s2, s1, dist_sq, v2);
+        float factor = v_dot_p / dist_sq;
 
         for (int i = 0; i < DIM; i++) {
-            s1->vel[i] = v1[i];
-            s2->vel[i] = v2[i];
+            s1->vel[i] -= factor * dpos[i];
+            s2->vel[i] += factor * dpos[i];
         }
     }
 }
@@ -323,7 +305,7 @@ void on_timer(float now)
 
     for (int i = 0; i < count; i++) {
         for (int j = 0; j < i; j++) {
-            sprite_check_collision(&globals.sprites[i], &globals.sprites[j]);
+            circle_sprite_collide(&globals.sprites[i], &globals.sprites[j]);
         }
     }
 
