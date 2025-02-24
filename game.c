@@ -11,7 +11,7 @@
 #define PLAYER_ACCEL 0.08
 
 #define PLAYER_RADIUS 36
-#define PLAYER_MASS 4
+#define PLAYER_MASS 2
 
 #define SPRITE_RADIUS 24
 #define SPRITE_DIM 6
