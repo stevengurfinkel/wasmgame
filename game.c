@@ -10,6 +10,9 @@
 #define DRAG_COEF 0.0005
 #define PLAYER_ACCEL 0.08
 
+#define PLAYER_RADIUS 48
+#define PLAYER_MASS 4
+
 #define SPRITE_RADIUS 24
 #define SPRITE_DIM 6
 #define SPRITE_COUNT (SPRITE_DIM * SPRITE_DIM)
@@ -41,7 +44,7 @@ typedef struct cirle_sprite_st
     circle_t circle;
     pixel_t color;
     float vel[DIM];
-    bool hidden;
+    float mass;
 } circle_sprite_t;
 
 typedef struct rect_st
@@ -108,6 +111,7 @@ void circle_sprite_init(circle_sprite_t *sprite, int idx)
 
     circle_init(&sprite->circle, x, y, SPRITE_RADIUS);
     spectral_color(&sprite->color, 2, idx);
+    sprite->mass = 1;
 }
 
 void globals_init(int width, int height)
@@ -115,8 +119,9 @@ void globals_init(int width, int height)
     set_timer_interval(1000 / FRAME_RATE);
     image_init(&globals.image, width, height);
     globals.player = &globals.sprites[SPRITE_COUNT];
-    circle_init(&globals.player->circle, width / 2, height / 2, SPRITE_RADIUS);
+    circle_init(&globals.player->circle, width / 2, height / 2, PLAYER_RADIUS);
     pixel_init(&globals.player->color, 255, 255, 255, 255);
+    globals.player->mass = PLAYER_MASS;
     for (int i = 0; i < SPRITE_COUNT; i++) {
         circle_sprite_init(&globals.sprites[i], i);
     }
@@ -281,6 +286,8 @@ void circle_sprite_collide(circle_sprite_t *s1, circle_sprite_t *s2)
     float dist_sq = 0;
     float dr = s1->circle.r + s2->circle.r;
 
+    float masses = s1->mass + s2->mass;
+
     for (int i = 0; i < DIM; i++) {
         dpos[i] = s1->circle.pos[i] - s2->circle.pos[i];
         dist_sq += dpos[i] * dpos[i];
@@ -295,8 +302,8 @@ void circle_sprite_collide(circle_sprite_t *s1, circle_sprite_t *s2)
         float factor = v_dot_p / dist_sq;
 
         for (int i = 0; i < DIM; i++) {
-            s1->vel[i] -= factor * dpos[i];
-            s2->vel[i] += factor * dpos[i];
+            s1->vel[i] -= 2 * s2->mass * factor * dpos[i] / masses;
+            s2->vel[i] += 2 * s1->mass * factor * dpos[i] / masses;
         }
     }
 }
