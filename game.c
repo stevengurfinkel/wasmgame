@@ -288,8 +288,6 @@ void circle_sprite_collide(circle_sprite_t *s1, circle_sprite_t *s2)
     float dist_sq = 0;
     float dr = s1->circle.r + s2->circle.r;
 
-    float masses = s1->mass + s2->mass;
-
     for (int i = 0; i < DIM; i++) {
         dpos[i] = s1->circle.pos[i] - s2->circle.pos[i];
         dist_sq += dpos[i] * dpos[i];
@@ -301,11 +299,11 @@ void circle_sprite_collide(circle_sprite_t *s1, circle_sprite_t *s2)
             v_dot_p += dpos[i] * (s1->vel[i] - s2->vel[i]);
         }
 
-        float factor = v_dot_p / dist_sq;
+        float factor = 2 * v_dot_p / (dist_sq * (s1->mass + s2->mass));
 
         for (int i = 0; i < DIM; i++) {
-            s1->vel[i] -= 2 * s2->mass * factor * dpos[i] / masses;
-            s2->vel[i] += 2 * s1->mass * factor * dpos[i] / masses;
+            s1->vel[i] -= s2->mass * factor * dpos[i];
+            s2->vel[i] += s1->mass * factor * dpos[i];
         }
     }
 }
