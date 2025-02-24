@@ -13,11 +13,14 @@
 #define SPRITE_DIM 6
 #define SPRITE_COUNT (SPRITE_DIM * SPRITE_DIM)
 
+#define X 0
+#define Y 1
+#define DIM 2
+
 typedef struct image_st
 {
     pixel_t *pixels;
-    int width;
-    int height;
+    int size[DIM];
 } image_t;
 
 typedef struct keyboard_st
@@ -83,8 +86,8 @@ void pixel_init(pixel_t *p, int r, int g, int b, int a)
 
 void image_init(image_t *image, int width, int height)
 {
-    image->width = width;
-    image->height = height;
+    image->size[X] = width;
+    image->size[Y] = height;
 
     size_t size = width * height * sizeof image->pixels[0];
     size_t page_count = (size + PAGE_SIZE) / PAGE_SIZE;
@@ -101,8 +104,8 @@ void image_init(image_t *image, int width, int height)
 void circle_sprite_init(circle_sprite_t *sprite, int idx)
 {
     const image_t *img = &globals.image;
-    int cell_height = img->height / SPRITE_DIM;
-    int cell_width = img->width / SPRITE_DIM;
+    int cell_height = img->size[Y] / SPRITE_DIM;
+    int cell_width = img->size[X] / SPRITE_DIM;
 
     int x = cell_width * (idx % SPRITE_DIM) + cell_width / 2;
     int y = cell_height * (idx / SPRITE_DIM) + cell_height / 2;
@@ -127,14 +130,14 @@ void draw_rectangle(image_t *img, rect_t *rect, pixel_t *pcolor)
 {
     pixel_t color = *pcolor;
     int x_lo = MAX(0, round_down(rect->x));
-    int x_hi = MIN(img->width, round_up(rect->x + rect->width));
+    int x_hi = MIN(img->size[X], round_up(rect->x + rect->width));
 
     int y_lo = MAX(0, round_down(rect->y));
-    int y_hi = MIN(img->height, round_up(rect->y + rect->height));
+    int y_hi = MIN(img->size[Y], round_up(rect->y + rect->height));
 
     for (int i = y_lo; i < y_hi; i++) {
         for (int j = x_lo; j < x_hi; j++) {
-            pixel_t *p = &img->pixels[i * img->width + j];
+            pixel_t *p = &img->pixels[i * img->size[X] + j];
             *p = color;
         }
     }
@@ -143,7 +146,7 @@ void draw_rectangle(image_t *img, rect_t *rect, pixel_t *pcolor)
 void image_clear(image_t *img)
 {
     pixel_t p = { .r = 0, .g = 0, .b = 0, .a = 255 };
-    for (int i = 0; i < img->width * img->height; i++) {
+    for (int i = 0; i < img->size[X] * img->size[Y]; i++) {
         img->pixels[i] = p;
     }
 }
@@ -153,10 +156,10 @@ void draw_circle(image_t *img, circle_t *c, pixel_t *pcolor)
     pixel_t color = *pcolor;
 
     int x_lo = MAX(0, round_down(c->x - c->r));
-    int x_hi = MIN(img->width, round_up(c->x + c->r));
+    int x_hi = MIN(img->size[X], round_up(c->x + c->r));
 
     int y_lo = MAX(0, round_down(c->y - c->r));
-    int y_hi = MIN(img->height, round_up(c->y + c->r));
+    int y_hi = MIN(img->size[Y], round_up(c->y + c->r));
 
     float r2 = c->r * c->r;
 
@@ -165,7 +168,7 @@ void draw_circle(image_t *img, circle_t *c, pixel_t *pcolor)
 
         for (int j = x_lo; j < x_hi; j++) {
             float x2 = (j - c->x) * (j - c->x);
-            pixel_t *p = &img->pixels[i * img->width + j];
+            pixel_t *p = &img->pixels[i * img->size[X] + j];
             if (x2 + y2 < r2) {
                 *p = color;
             }
@@ -218,8 +221,8 @@ bool circle_dir_detect_oob(float *pos, float *dpos, float r, int limit)
 bool sprite_detect_oob(circle_sprite_t *sprite)
 {
     circle_t *circle = &sprite->circle;
-    bool x = circle_dir_detect_oob(&circle->x, &sprite->vel_x, circle->r, globals.image.width);
-    bool y = circle_dir_detect_oob(&circle->y, &sprite->vel_y, circle->r, globals.image.height);
+    bool x = circle_dir_detect_oob(&circle->x, &sprite->vel_x, circle->r, globals.image.size[X]);
+    bool y = circle_dir_detect_oob(&circle->y, &sprite->vel_y, circle->r, globals.image.size[Y]);
     return x || y;
 }
 
