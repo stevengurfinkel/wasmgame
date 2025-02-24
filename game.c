@@ -25,10 +25,15 @@ typedef struct circle_st
     float x;
     float y;
     float r;
+} circle_t;
 
+typedef struct cirle_sprite_st
+{
+    circle_t circle;
+    pixel_t color;
     float dx;
     float dy;
-} circle_t;
+} circle_sprite_t;
 
 typedef struct rect_st
 {
@@ -41,7 +46,7 @@ typedef struct rect_st
 typedef struct globals_st
 {
     image_t image;
-    circle_t circle;
+    circle_sprite_t player;
     keyboard_t keyboard;
     pixel_t color;
     int collision_count;
@@ -86,8 +91,8 @@ void globals_init(int width, int height)
 {
     set_timer_interval(1000 / FRAME_RATE);
     image_init(&globals.image, width, height);
-    circle_init(&globals.circle, width / 2, height / 2, 120);
-    pixel_init(&globals.color, 255, 255, 255, 255);
+    circle_init(&globals.player.circle, width / 2, height / 2, 120);
+    pixel_init(&globals.player.color, 255, 255, 255, 255);
 }
 
 void draw_rectangle(image_t *img, rect_t *rect, pixel_t *pcolor)
@@ -182,57 +187,68 @@ bool circle_dir_detect_oob(float *pos, float *dpos, float r, int limit)
     return is_oob;
 }
 
-bool circle_detect_oob(circle_t *circle, image_t *image)
+bool sprite_detect_oob(circle_sprite_t *sprite)
 {
-    bool x = circle_dir_detect_oob(&circle->x, &circle->dx, circle->r, image->width);
-    bool y = circle_dir_detect_oob(&circle->y, &circle->dy, circle->r, image->height);
+    circle_t *circle = &sprite->circle;
+    bool x = circle_dir_detect_oob(&circle->x, &sprite->dx, circle->r, globals.image.width);
+    bool y = circle_dir_detect_oob(&circle->y, &sprite->dy, circle->r, globals.image.height);
     return x || y;
+}
+
+int spectral_color_value(int count, int max_value)
+{
+    int period = 3 * max_value;
+    int i = count % period;
+    if (i < max_value) {
+        return 0;
+    }
+    if (i < 2 * max_value) {
+        return i - max_value;
+    }
+    return period - i;
 }
 
 void change_color(pixel_t *p, int count)
 {
-    int id = count & 0x3F;
-    log_int(id);
-    p->r = (id & 0x3) << 6;
-    p->g = (id & 0xC) << 4;
-    p->b = (id & 0x30) << 2;
+    int max_value = 3;
+    log_int(spectral_color_value(count, max_value));
+    p->r = spectral_color_value(count, max_value) << 6;
+    p->g = spectral_color_value(count + max_value, max_value) << 6;
+    p->b = spectral_color_value(count + 2 * max_value, max_value) << 6;
     p->a = 0xFF;
+}
+
+bool circle_sprite_move(circle_sprite_t *sprite)
+{
+    float drag = 1 - (0.0001 * (sprite->dx * sprite->dx + sprite->dy * sprite->dy));
+    sprite->dx *= drag;
+    sprite->dy *= drag;
+
+    circle_t *circle = &sprite->circle;
+    circle->x += sprite->dx;
+    circle->y += sprite->dy;
+
+    return sprite_detect_oob(sprite);
+}
+
+void player_move(circle_sprite_t *player)
+{
+    keyboard_t *keys = &globals.keyboard;
+    player->dx += 0.03 * keys->x_dir;
+    player->dy += 0.03 * keys->y_dir;
 }
 
 void on_timer(float now)
 {
-    circle_t *c = &globals.circle;
-    keyboard_t *k = &globals.keyboard;
+    circle_sprite_t *player = &globals.player;
+    player_move(player);
 
-    c->dx += 0.03 * k->x_dir;
-    c->dy += 0.03 * k->y_dir;
-
-    float drag = 1 - (0.0001 * (c->dx * c->dx + c->dy * c->dy));
-    c->dx *= drag;
-    c->dy *= drag;
-
-    c->x += c->dx;
-    c->y += c->dy;
-
-    image_t *img = &globals.image;
-    if (circle_detect_oob(c, img)) {
-        globals.collision_count++;
-        change_color(&globals.color, globals.collision_count);
+    if (circle_sprite_move(player)) {
+        change_color(&player->color, ++globals.collision_count);
     }
 
-    image_clear(img);
-    draw_circle(img, c, &globals.color);
-    rect_t r = { .x = c->x - 10,
-                 .y = c->y - 10,
-                 .width = 20,
-                 .height = 20 };
-
-    pixel_t white;
-    pixel_init(&white, 255, 255, 255, 255);
-    draw_rectangle(img, &r, &white);
-
-    if (globals.frameId % LOG_INTERVAL == 0) {
-    }
+    image_clear(&globals.image);
+    draw_circle(&globals.image, &player->circle, &player->color);
     globals.frameId++;
 }
 
