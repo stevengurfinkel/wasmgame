@@ -115,7 +115,7 @@ void globals_init(int width, int height)
 {
     set_timer_interval(1000 / FRAME_RATE);
     image_init(&globals.image, width, height);
-    globals.player = &globals.sprites[SPRITE_COUNT + 1];
+    globals.player = &globals.sprites[SPRITE_COUNT];
     circle_init(&globals.player->circle, width / 2, height / 2, SPRITE_RADIUS);
     pixel_init(&globals.player->color, 255, 255, 255, 255);
     for (int i = 0; i < SPRITE_COUNT; i++) {
@@ -278,14 +278,24 @@ void player_move(circle_sprite_t *player)
     player->vel_y += PLAYER_ACCEL * keys->y_dir;
 }
 
-bool sprite_check_collision(circle_sprite_t *s1, circle_sprite_t *s2)
+void exchange_float(float *a, float *b)
+{
+    float f = *a;
+    *a = *b;
+    *b = f;
+}
+
+void sprite_check_collision(circle_sprite_t *s1, circle_sprite_t *s2)
 {
     float dx = s1->circle.x - s2->circle.x;
     float dy = s1->circle.y - s2->circle.y;
 
     float r = s1->circle.r + s2->circle.r;
 
-    return dx * dx + dy * dy < r * r;
+    if (dx * dx + dy * dy < r * r) {
+        exchange_float(&s1->vel_x, &s2->vel_x);
+        exchange_float(&s1->vel_y, &s2->vel_y);
+    }
 }
 
 void on_timer(float now)
@@ -293,21 +303,23 @@ void on_timer(float now)
     circle_sprite_t *player = globals.player;
     player_move(player);
 
-    circle_sprite_move(player);
+    int count = ARRAY_COUNT(globals.sprites);
 
-    image_t *img = &globals.image;
-    image_clear(img);
-    for (int i = 0; i < SPRITE_COUNT; i++) {
-        circle_sprite_t *sprite = &globals.sprites[i];
-        if (sprite_check_collision(player, sprite)) {
-            sprite->hidden = true;
-        }
-        if (!sprite->hidden) {
-            draw_circle(img, &sprite->circle, &sprite->color);
+    for (int i = 0; i < count; i++) {
+        for (int j = 0; j < i; j++) {
+            sprite_check_collision(&globals.sprites[i], &globals.sprites[j]);
         }
     }
 
-    draw_circle(img, &player->circle, &player->color);
+    image_t *img = &globals.image;
+    image_clear(img);
+
+    for (int i = 0; i < count; i++) {
+        circle_sprite_t *sprite = &globals.sprites[i];
+        circle_sprite_move(sprite);
+        draw_circle(img, &sprite->circle, &sprite->color);
+    }
+
     globals.frameId++;
 }
 
