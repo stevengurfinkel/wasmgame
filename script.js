@@ -46,7 +46,7 @@ function onInterval()
 function wasmMemoryGrow(page_count)
 {
     let len = wasm.memory.buffer.byteLength;
-    wasm.memory.grow(Math.ceil(page_count));
+    wasm.memory.grow(page_count);
     return len;
 }
 
