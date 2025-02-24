@@ -26,8 +26,7 @@ typedef struct image_st
 typedef struct keyboard_st
 {
     bool is_pressed[KEY_CODE_COUNT];
-    int x_dir;
-    int y_dir;
+    int dir[DIM];
 } keyboard_t;
 
 typedef struct circle_st
@@ -178,8 +177,8 @@ void draw_circle(image_t *img, circle_t *c, pixel_t *pcolor)
 
 void keyboard_calc_dir(keyboard_t *k)
 {
-    k->x_dir = k->is_pressed[KEY_CODE_ARROW_RIGHT] - k->is_pressed[KEY_CODE_ARROW_LEFT];
-    k->y_dir = k->is_pressed[KEY_CODE_ARROW_DOWN] - k->is_pressed[KEY_CODE_ARROW_UP];
+    k->dir[X] = k->is_pressed[KEY_CODE_ARROW_RIGHT] - k->is_pressed[KEY_CODE_ARROW_LEFT];
+    k->dir[Y] = k->is_pressed[KEY_CODE_ARROW_DOWN] - k->is_pressed[KEY_CODE_ARROW_UP];
 }
 
 void on_keydown(int key_code)
@@ -277,8 +276,8 @@ bool circle_sprite_move(circle_sprite_t *sprite)
 void player_move(circle_sprite_t *player)
 {
     keyboard_t *keys = &globals.keyboard;
-    player->vel_x += PLAYER_ACCEL * keys->x_dir;
-    player->vel_y += PLAYER_ACCEL * keys->y_dir;
+    player->vel_x += PLAYER_ACCEL * keys->dir[X];
+    player->vel_y += PLAYER_ACCEL * keys->dir[Y];
 }
 
 void exchange_float(float *a, float *b)
