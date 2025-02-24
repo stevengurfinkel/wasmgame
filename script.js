@@ -1,25 +1,18 @@
-let ctx = null;
 let canvas = null;
 let timer = null;
-
-let wasm = { mem: null,
-             pixelOffset: 0,
-             on_timer: null,
-             on_keydown: null,
-             on_keyup: null,
-             on_mousedown: null,
-             globals_init: null};
+let pixelOffset = 0;
+let wasm = null;
 
 function wasmPaint()
 {
-    let pixels = new Uint8ClampedArray(wasm.mem.buffer, wasm.pixelOffset, 4 * canvas.width * canvas.height);
-    ctx.putImageData(new ImageData(pixels, canvas.width, canvas.height), 0, 0);
+    let byteCount = 4 * canvas.width * canvas.height;
+    let pixels = new Uint8ClampedArray(wasm.memory.buffer, pixelOffset, byteCount);
+    canvas.getContext("2d").putImageData(new ImageData(pixels, canvas.width, canvas.height), 0, 0);
 }
 
 function onMousedown(e)
 {
     wasm.on_mousedown(e.offsetX, e.offsetY);
-    wasmPaint();
 }
 
 function onKeydown(e)
@@ -52,25 +45,19 @@ function onInterval()
 
 function wasmMemoryGrow(page_count)
 {
-    let len = wasm.mem.buffer.byteLength;
-    wasm.mem.grow(Math.ceil(page_count));
+    let len = wasm.memory.buffer.byteLength;
+    wasm.memory.grow(Math.ceil(page_count));
     return len;
 }
 
 function wasmSetImageBuffer(ptr)
 {
-    wasm.pixelOffset = ptr;
+    pixelOffset = ptr;
 }
 
 function wasmInitWithInst(inst)
 {
-    let exp = inst.instance.exports;
-    wasm.mem = exp.memory;
-    wasm.on_keydown = exp.on_keydown;
-    wasm.on_mousedown = exp.on_mousedown;
-    wasm.on_keyup = exp.on_keyup;
-    wasm.on_timer = exp.on_timer;
-    wasm.globals_init = exp.globals_init;
+    wasm = inst.instance.exports;
     canvas.addEventListener("mousedown", onMousedown);
     document.addEventListener("keydown", onKeydown);
     document.addEventListener("keyup", onKeyup);
@@ -79,7 +66,7 @@ function wasmInitWithInst(inst)
 
 function wasmLogStrWithSize(msg, size)
 {
-    const bytes = new Uint8Array(wasm.mem.buffer, msg, size);
+    const bytes = new Uint8Array(wasm.memory.buffer, msg, size);
     console.log(bytes.reduce((str, code) => str + String.fromCharCode(code), ""));
 }
 
@@ -100,11 +87,6 @@ function wasmInit()
 function start(event)
 {
     canvas = document.getElementById("canvas");
-    ctx = canvas.getContext("2d");
-    pixels = new Uint8ClampedArray(4 * canvas.width * canvas.height);
-    image = new ImageData(pixels, canvas.width, canvas.height);
-
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    canvas.getContext("2d").fillRect(0, 0, canvas.width, canvas.height);
     wasmInit();
 }
-
