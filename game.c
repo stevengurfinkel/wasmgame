@@ -277,16 +277,40 @@ void exchange_float(float *a, float *b)
     *b = f;
 }
 
+void sprite_collide(const circle_sprite_t *self, const circle_sprite_t *other, float dist_sq, float *vel_out)
+{
+    float v_dot_p = 0; // difference in velocity * difference in position
+    float p_diff[DIM]; // difference in position
+
+    for (int i = 0; i < DIM; i++) {
+        float v_diff = self->vel[i] - other->vel[i];
+        p_diff[i] = self->circle.pos[i] - other->circle.pos[i];
+        v_dot_p += v_diff * p_diff[i];
+    }
+
+    for (int i = 0; i < DIM; i++) {
+        vel_out[i] = self->vel[i] - v_dot_p * p_diff[i] / dist_sq;
+    }
+}
+
 void sprite_check_collision(circle_sprite_t *s1, circle_sprite_t *s2)
 {
     float dx = s1->circle.pos[X] - s2->circle.pos[X];
     float dy = s1->circle.pos[Y] - s2->circle.pos[Y];
 
+    float dist_sq = dx * dx + dy * dy;
     float r = s1->circle.r + s2->circle.r;
 
-    if (dx * dx + dy * dy < r * r) {
-        exchange_float(&s1->vel[X], &s2->vel[X]);
-        exchange_float(&s1->vel[Y], &s2->vel[Y]);
+    if (dist_sq < r * r) {
+        float v1[DIM];
+        float v2[DIM];
+        sprite_collide(s1, s2, dist_sq, v1);
+        sprite_collide(s2, s1, dist_sq, v2);
+
+        for (int i = 0; i < DIM; i++) {
+            s1->vel[i] = v1[i];
+            s2->vel[i] = v2[i];
+        }
     }
 }
 
