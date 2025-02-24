@@ -156,18 +156,20 @@ void draw_circle(image_t *img, circle_t *c, pixel_t *pcolor)
 {
     pixel_t color = *pcolor;
 
-    int x_lo = MAX(0, round_down(c->pos[X] - c->r));
-    int x_hi = MIN(img->size[X], round_up(c->pos[X] + c->r));
-
-    int y_lo = MAX(0, round_down(c->pos[Y] - c->r));
-    int y_hi = MIN(img->size[Y], round_up(c->pos[Y] + c->r));
+    int lo[DIM];
+    int hi[DIM];
 
     float r2 = c->r * c->r;
 
-    for (int i = y_lo; i < y_hi; i++) {
+    for (int i = 0; i < DIM; i++) {
+        lo[i] = MAX(0, round_down(c->pos[i] - c->r));
+        hi[i] = MIN(img->size[i], round_up(c->pos[i] + c->r));
+    }
+
+    for (int i = lo[Y]; i < hi[Y]; i++) {
         float y2 = (i - c->pos[Y]) * (i - c->pos[Y]);
 
-        for (int j = x_lo; j < x_hi; j++) {
+        for (int j = lo[X]; j < hi[X]; j++) {
             float x2 = (j - c->pos[X]) * (j - c->pos[X]);
             pixel_t *p = &img->pixels[i * img->size[X] + j];
             if (x2 + y2 < r2) {
