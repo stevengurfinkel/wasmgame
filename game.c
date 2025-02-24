@@ -45,10 +45,8 @@ typedef struct cirle_sprite_st
 
 typedef struct rect_st
 {
-    float x;
-    float y;
-    float width;
-    float height;
+    float start[DIM];
+    float size[DIM];
 } rect_t;
 
 typedef struct globals_st
@@ -126,11 +124,11 @@ void globals_init(int width, int height)
 void draw_rectangle(image_t *img, rect_t *rect, pixel_t *pcolor)
 {
     pixel_t color = *pcolor;
-    int x_lo = MAX(0, round_down(rect->x));
-    int x_hi = MIN(img->size[X], round_up(rect->x + rect->width));
+    int x_lo = MAX(0, round_down(rect->start[X]));
+    int x_hi = MIN(img->size[X], round_up(rect->start[X] + rect->size[X]));
 
-    int y_lo = MAX(0, round_down(rect->y));
-    int y_hi = MIN(img->size[Y], round_up(rect->y + rect->height));
+    int y_lo = MAX(0, round_down(rect->start[Y]));
+    int y_hi = MIN(img->size[Y], round_up(rect->start[Y] + rect->size[Y]));
 
     for (int i = y_lo; i < y_hi; i++) {
         for (int j = x_lo; j < x_hi; j++) {
