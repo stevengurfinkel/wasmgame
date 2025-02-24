@@ -191,34 +191,28 @@ void on_keyup(int key_code)
     keyboard_calc_dir(&globals.keyboard);
 }
 
-bool circle_dir_detect_oob(float *pos, float *dpos, float r, int limit)
+bool shape_bounce_off_edge(float *pos, float *vel, float r, const int *limit)
 {
-    float p = *pos;
-    float d = *dpos;
     bool is_oob = false;
-
-    if (p - r < 0) {
-        p = r;
-        d *= -1;
-        is_oob = true;
+    for (int i = 0; i < DIM; i++) {
+        if (pos[i] - r < 0) {
+            pos[i] = r;
+            vel[i] *= -1;
+            is_oob = true;
+        }
+        else if (pos[i] + r > limit[i]) {
+            pos[i] = limit[i] - r;
+            vel[i] *= -1;
+            is_oob = true;
+        }
     }
-    else if (p + r > limit) {
-        p = limit - r;
-        d *= -1;
-        is_oob = true;
-    }
-
-    *pos = p;
-    *dpos = d;
     return is_oob;
 }
 
-bool sprite_detect_oob(circle_sprite_t *sprite)
+bool circle_sprite_bounce_off_edge(circle_sprite_t *sprite)
 {
     circle_t *circle = &sprite->circle;
-    bool x = circle_dir_detect_oob(&circle->pos[X], &sprite->vel[X], circle->r, globals.image.size[X]);
-    bool y = circle_dir_detect_oob(&circle->pos[Y], &sprite->vel[Y], circle->r, globals.image.size[Y]);
-    return x || y;
+    return shape_bounce_off_edge(circle->pos, sprite->vel, circle->r, globals.image.size);
 }
 
 int spectral_color_value(int count, int max_value)
@@ -266,7 +260,7 @@ bool circle_sprite_move(circle_sprite_t *sprite)
     circle->pos[X] += sprite->vel[X];
     circle->pos[Y] += sprite->vel[Y];
 
-    return sprite_detect_oob(sprite);
+    return circle_sprite_bounce_off_edge(sprite);
 }
 
 void player_move(circle_sprite_t *player)
