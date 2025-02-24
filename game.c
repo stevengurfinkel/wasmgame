@@ -6,6 +6,9 @@
 #define FRAME_RATE 50
 #define LOG_INTERVAL 64
 
+#define DRAG_COEF 0.0005
+#define PLAYER_ACCEL 0.03
+
 #define SPRITE_RADIUS 24
 #define SPRITE_DIM 6
 #define SPRITE_COUNT (SPRITE_DIM * SPRITE_DIM)
@@ -35,8 +38,8 @@ typedef struct cirle_sprite_st
 {
     circle_t circle;
     pixel_t color;
-    float dx;
-    float dy;
+    float vel_x;
+    float vel_y;
     bool hidden;
 } circle_sprite_t;
 
@@ -215,8 +218,8 @@ bool circle_dir_detect_oob(float *pos, float *dpos, float r, int limit)
 bool sprite_detect_oob(circle_sprite_t *sprite)
 {
     circle_t *circle = &sprite->circle;
-    bool x = circle_dir_detect_oob(&circle->x, &sprite->dx, circle->r, globals.image.width);
-    bool y = circle_dir_detect_oob(&circle->y, &sprite->dy, circle->r, globals.image.height);
+    bool x = circle_dir_detect_oob(&circle->x, &sprite->vel_x, circle->r, globals.image.width);
+    bool y = circle_dir_detect_oob(&circle->y, &sprite->vel_y, circle->r, globals.image.height);
     return x || y;
 }
 
@@ -238,7 +241,6 @@ void spectral_color(pixel_t *p, int bits, int idx)
     int max_value = (1 << bits) - 1;
     int shift = 8 - bits;
 
-    log_int(spectral_color_value(idx, max_value));
     p->r = spectral_color_value(idx, max_value) << shift;
     p->g = spectral_color_value(idx + max_value, max_value) << shift;
     p->b = spectral_color_value(idx + 2 * max_value, max_value) << shift;
@@ -252,13 +254,19 @@ void change_color(pixel_t *p, int count)
 
 bool circle_sprite_move(circle_sprite_t *sprite)
 {
-    float drag = 1 - (0.0001 * (sprite->dx * sprite->dx + sprite->dy * sprite->dy));
-    sprite->dx *= drag;
-    sprite->dy *= drag;
+    float vel2 = sprite->vel_x * sprite->vel_x + sprite->vel_y * sprite->vel_y;
+    if (vel2 > 0) {
+        float speed = sqrtf(vel2);
+        float norm_x = sprite->vel_x / speed;
+        float norm_y = sprite->vel_y / speed;
+
+        sprite->vel_x -= DRAG_COEF * norm_x * vel2;
+        sprite->vel_y -= DRAG_COEF * norm_y * vel2;
+    }
 
     circle_t *circle = &sprite->circle;
-    circle->x += sprite->dx;
-    circle->y += sprite->dy;
+    circle->x += sprite->vel_x;
+    circle->y += sprite->vel_y;
 
     return sprite_detect_oob(sprite);
 }
@@ -266,8 +274,8 @@ bool circle_sprite_move(circle_sprite_t *sprite)
 void player_move(circle_sprite_t *player)
 {
     keyboard_t *keys = &globals.keyboard;
-    player->dx += 0.03 * keys->x_dir;
-    player->dy += 0.03 * keys->y_dir;
+    player->vel_x += PLAYER_ACCEL * keys->x_dir;
+    player->vel_y += PLAYER_ACCEL * keys->y_dir;
 }
 
 bool sprite_check_collision(circle_sprite_t *s1, circle_sprite_t *s2)

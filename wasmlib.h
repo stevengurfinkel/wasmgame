@@ -4,6 +4,7 @@
 size_t strlen(const char *s);
 void *memset(void *s, int c, size_t n);
 float fabsf(float x);
+float sqrtf(float x);
 
 // Custom
 #define MAX(a, b) ((a) > (b) ? (a) : (b))

@@ -91,7 +91,8 @@ function wasmInit()
                            "log_float": console.log,
                            "log_int": console.log,
                            "log_i64": console.log,
-                           "log_str_with_size": wasmLogStrWithSize}};
+                           "log_str_with_size": wasmLogStrWithSize,
+                           "sqrtf": Math.sqrt}};
 
     WebAssembly.instantiate(new Uint8Array(wasmBinary), imports).then(wasmInitWithInst);
 }
