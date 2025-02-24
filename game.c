@@ -284,23 +284,36 @@ void player_move(circle_sprite_t *player)
 
 void circle_sprite_collide(circle_sprite_t *s1, circle_sprite_t *s2)
 {
-    float dpos[DIM];
-    float dist_sq = 0;
-    float dr = s1->circle.r + s2->circle.r;
+    float dpos[DIM]; // distance between center points
+    float dist_sq = 0; // square of the distance
+    float dr = s1->circle.r + s2->circle.r; // collision distance
 
+    // calculate the distance between sprites
     for (int i = 0; i < DIM; i++) {
         dpos[i] = s1->circle.pos[i] - s2->circle.pos[i];
         dist_sq += dpos[i] * dpos[i];
     }
 
+    // if they're too close, it's a collision
     if (dist_sq < dr * dr) {
+        // calculate the extent to which the collision plane
+        // and the sprite's relative velocities are in the same direction
+        // using a dot-product
         float v_dot_p = 0;
         for (int i = 0; i < DIM; i++) {
             v_dot_p += dpos[i] * (s1->vel[i] - s2->vel[i]);
         }
 
+        // They're already moving away from eachother
+        // don't change the vector or they might get stuck
+        if (v_dot_p > 0) {
+            return;
+        }
+
+        // factor-out some common fields
         float factor = 2 * v_dot_p / (dist_sq * (s1->mass + s2->mass));
 
+        // update the velocities
         for (int i = 0; i < DIM; i++) {
             s1->vel[i] -= s2->mass * factor * dpos[i];
             s2->vel[i] += s1->mass * factor * dpos[i];
