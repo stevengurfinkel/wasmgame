@@ -3,10 +3,12 @@
 // C standard library
 size_t strlen(const char *s);
 void *memset(void *s, int c, size_t n);
+float fabsf(float x);
 
 // Custom
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
+#define ARRAY_COUNT(array) (sizeof (array) / sizeof (array)[0])
 
 void log_str(const char *msg);
 int round_down(float f);

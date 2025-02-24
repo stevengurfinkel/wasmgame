@@ -20,6 +20,11 @@ void *memset(void *s, int c, size_t n)
     return s;
 }
 
+float fabsf(float x)
+{
+    return x >= 0 ? x : -x;
+}
+
 int round_down(float f)
 {
     return (int)f;

@@ -6,6 +6,10 @@
 #define FRAME_RATE 50
 #define LOG_INTERVAL 64
 
+#define SPRITE_RADIUS 24
+#define SPRITE_DIM 6
+#define SPRITE_COUNT (SPRITE_DIM * SPRITE_DIM)
+
 typedef struct image_st
 {
     pixel_t *pixels;
@@ -33,6 +37,7 @@ typedef struct cirle_sprite_st
     pixel_t color;
     float dx;
     float dy;
+    bool hidden;
 } circle_sprite_t;
 
 typedef struct rect_st
@@ -46,7 +51,8 @@ typedef struct rect_st
 typedef struct globals_st
 {
     image_t image;
-    circle_sprite_t player;
+    circle_sprite_t *player;
+    circle_sprite_t sprites[SPRITE_COUNT + 1];
     keyboard_t keyboard;
     pixel_t color;
     int collision_count;
@@ -54,6 +60,8 @@ typedef struct globals_st
 } globals_t;
 
 static globals_t globals = {0};
+
+void spectral_color(pixel_t *p, int bits, int idx);
 
 void circle_init(circle_t *c, float x, float y, float r)
 {
@@ -87,12 +95,29 @@ void image_init(image_t *image, int width, int height)
     }
 }
 
+void circle_sprite_init(circle_sprite_t *sprite, int idx)
+{
+    const image_t *img = &globals.image;
+    int cell_height = img->height / SPRITE_DIM;
+    int cell_width = img->width / SPRITE_DIM;
+
+    int x = cell_width * (idx % SPRITE_DIM) + cell_width / 2;
+    int y = cell_height * (idx / SPRITE_DIM) + cell_height / 2;
+
+    circle_init(&sprite->circle, x, y, SPRITE_RADIUS);
+    spectral_color(&sprite->color, 2, idx);
+}
+
 void globals_init(int width, int height)
 {
     set_timer_interval(1000 / FRAME_RATE);
     image_init(&globals.image, width, height);
-    circle_init(&globals.player.circle, width / 2, height / 2, 120);
-    pixel_init(&globals.player.color, 255, 255, 255, 255);
+    globals.player = &globals.sprites[SPRITE_COUNT + 1];
+    circle_init(&globals.player->circle, width / 2, height / 2, SPRITE_RADIUS);
+    pixel_init(&globals.player->color, 255, 255, 255, 255);
+    for (int i = 0; i < SPRITE_COUNT; i++) {
+        circle_sprite_init(&globals.sprites[i], i);
+    }
 }
 
 void draw_rectangle(image_t *img, rect_t *rect, pixel_t *pcolor)
@@ -208,14 +233,21 @@ int spectral_color_value(int count, int max_value)
     return period - i;
 }
 
+void spectral_color(pixel_t *p, int bits, int idx)
+{
+    int max_value = (1 << bits) - 1;
+    int shift = 8 - bits;
+
+    log_int(spectral_color_value(idx, max_value));
+    p->r = spectral_color_value(idx, max_value) << shift;
+    p->g = spectral_color_value(idx + max_value, max_value) << shift;
+    p->b = spectral_color_value(idx + 2 * max_value, max_value) << shift;
+    p->a = 0xFF;
+}
+
 void change_color(pixel_t *p, int count)
 {
-    int max_value = 3;
-    log_int(spectral_color_value(count, max_value));
-    p->r = spectral_color_value(count, max_value) << 6;
-    p->g = spectral_color_value(count + max_value, max_value) << 6;
-    p->b = spectral_color_value(count + 2 * max_value, max_value) << 6;
-    p->a = 0xFF;
+    spectral_color(p, 2, count);
 }
 
 bool circle_sprite_move(circle_sprite_t *sprite)
@@ -238,17 +270,36 @@ void player_move(circle_sprite_t *player)
     player->dy += 0.03 * keys->y_dir;
 }
 
+bool sprite_check_collision(circle_sprite_t *s1, circle_sprite_t *s2)
+{
+    float dx = s1->circle.x - s2->circle.x;
+    float dy = s1->circle.y - s2->circle.y;
+
+    float r = s1->circle.r + s2->circle.r;
+
+    return dx * dx + dy * dy < r * r;
+}
+
 void on_timer(float now)
 {
-    circle_sprite_t *player = &globals.player;
+    circle_sprite_t *player = globals.player;
     player_move(player);
 
-    if (circle_sprite_move(player)) {
-        change_color(&player->color, ++globals.collision_count);
+    circle_sprite_move(player);
+
+    image_t *img = &globals.image;
+    image_clear(img);
+    for (int i = 0; i < SPRITE_COUNT; i++) {
+        circle_sprite_t *sprite = &globals.sprites[i];
+        if (sprite_check_collision(player, sprite)) {
+            sprite->hidden = true;
+        }
+        if (!sprite->hidden) {
+            draw_circle(img, &sprite->circle, &sprite->color);
+        }
     }
 
-    image_clear(&globals.image);
-    draw_circle(&globals.image, &player->circle, &player->color);
+    draw_circle(img, &player->circle, &player->color);
     globals.frameId++;
 }
 
