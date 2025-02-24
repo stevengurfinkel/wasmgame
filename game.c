@@ -10,7 +10,7 @@
 #define DRAG_COEF 0.0005
 #define PLAYER_ACCEL 0.08
 
-#define PLAYER_RADIUS 48
+#define PLAYER_RADIUS 36
 #define PLAYER_MASS 4
 
 #define SPRITE_RADIUS 24
@@ -300,6 +300,7 @@ void circle_sprite_update_damage(circle_sprite_t *s)
         color->g = MAX(color->g - impact, 0);
         color->b = MAX(color->b - impact, 0);
     }
+    globals.player->circle.r++;
 }
 
 void circle_sprite_collide(circle_sprite_t *s1, circle_sprite_t *s2)
