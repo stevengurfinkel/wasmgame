@@ -15,6 +15,7 @@
 
 #define SPRITE_RADIUS 24
 #define SPRITE_DIM 6
+#define SPRITE_MAX_DAMAGE 4
 #define SPRITE_COUNT (SPRITE_DIM * SPRITE_DIM)
 
 #define X 0
@@ -45,6 +46,7 @@ typedef struct cirle_sprite_st
     pixel_t color;
     float vel[DIM];
     float mass;
+    int damage_count;
 } circle_sprite_t;
 
 typedef struct rect_st
@@ -57,7 +59,9 @@ typedef struct globals_st
 {
     image_t image;
     circle_sprite_t *player;
-    circle_sprite_t sprites[SPRITE_COUNT + 1];
+    int sprite_count;
+    circle_sprite_t *sprites[SPRITE_COUNT + 1];
+    circle_sprite_t all_sprites[SPRITE_COUNT + 1];
     keyboard_t keyboard;
     pixel_t color;
     int collision_count;
@@ -118,12 +122,16 @@ void globals_init(int width, int height)
 {
     set_timer_interval(1000 / FRAME_RATE);
     image_init(&globals.image, width, height);
-    globals.player = &globals.sprites[SPRITE_COUNT];
+    globals.player = &globals.all_sprites[SPRITE_COUNT];
     circle_init(&globals.player->circle, width / 2, height / 2, PLAYER_RADIUS);
     pixel_init(&globals.player->color, 255, 255, 255, 255);
     globals.player->mass = PLAYER_MASS;
     for (int i = 0; i < SPRITE_COUNT; i++) {
-        circle_sprite_init(&globals.sprites[i], i);
+        circle_sprite_init(&globals.all_sprites[i], i);
+    }
+    globals.sprite_count = ARRAY_COUNT(globals.sprites);
+    for (int i = 0; i < globals.sprite_count; i++) {
+        globals.sprites[i] = &globals.all_sprites[i];
     }
 }
 
@@ -282,6 +290,18 @@ void player_move(circle_sprite_t *player)
     player->vel[Y] += PLAYER_ACCEL * keys->dir[Y];
 }
 
+void circle_sprite_update_damage(circle_sprite_t *s)
+{
+    s->damage_count++;
+    if (s->damage_count < SPRITE_MAX_DAMAGE) {
+        pixel_t *color = &s->color;
+        int impact = 16;
+        color->r = MAX(color->r - impact, 0);
+        color->g = MAX(color->g - impact, 0);
+        color->b = MAX(color->b - impact, 0);
+    }
+}
+
 void circle_sprite_collide(circle_sprite_t *s1, circle_sprite_t *s2)
 {
     float dpos[DIM]; // distance between center points
@@ -318,6 +338,13 @@ void circle_sprite_collide(circle_sprite_t *s1, circle_sprite_t *s2)
             s1->vel[i] -= s2->mass * factor * dpos[i];
             s2->vel[i] += s1->mass * factor * dpos[i];
         }
+
+        if (s1 == globals.player) {
+            circle_sprite_update_damage(s2);
+        }
+        else if (s2 == globals.player) {
+            circle_sprite_update_damage(s1);
+        }
     }
 }
 
@@ -326,11 +353,11 @@ void on_timer(float now)
     circle_sprite_t *player = globals.player;
     player_move(player);
 
-    int count = ARRAY_COUNT(globals.sprites);
+    int count = globals.sprite_count;
 
     for (int i = 0; i < count; i++) {
         for (int j = 0; j < i; j++) {
-            circle_sprite_collide(&globals.sprites[i], &globals.sprites[j]);
+            circle_sprite_collide(globals.sprites[i], globals.sprites[j]);
         }
     }
 
@@ -338,9 +365,16 @@ void on_timer(float now)
     image_clear(img);
 
     for (int i = 0; i < count; i++) {
-        circle_sprite_t *sprite = &globals.sprites[i];
+        circle_sprite_t *sprite = globals.sprites[i];
         circle_sprite_move(sprite);
         draw_circle(img, &sprite->circle, &sprite->color);
+    }
+
+    globals.sprite_count = 0;
+    for (int i = 0; i < count; i++) {
+        if (globals.sprites[i]->damage_count < SPRITE_MAX_DAMAGE) {
+            globals.sprites[globals.sprite_count++] = globals.sprites[i];
+        }
     }
 
     globals.frameId++;
