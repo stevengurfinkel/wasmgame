@@ -13,6 +13,7 @@
 #define PLAYER_RADIUS 36
 #define PLAYER_MASS 2
 
+#define SPRITE_ACCEL 0.10
 #define SPRITE_RADIUS 24
 #define SPRITE_DIM 6
 #define SPRITE_MAX_DAMAGE 4
@@ -291,6 +292,23 @@ void player_move(circle_sprite_t *player)
     player->vel[Y] += PLAYER_ACCEL * keys->dir[Y];
 }
 
+void sprite_escape(circle_sprite_t *sprite)
+{
+    circle_sprite_t *player = globals.player;
+    float away[DIM];
+    float dist = 0;
+    for (int i = 0; i < DIM; i++) {
+        away[i] = sprite->circle.pos[i] - player->circle.pos[i];
+        dist += away[i] * away[i];
+    }
+    dist = sqrtf(dist);
+    if (dist < 2 * (player->circle.r + sprite->circle.r)) {
+        for (int i = 0; i < DIM; i++) {
+            sprite->vel[i] += SPRITE_ACCEL * (away[i] / dist);
+        }
+    }
+}
+
 void circle_sprite_update_damage(circle_sprite_t *s)
 {
     s->damage_count++;
@@ -409,6 +427,9 @@ void on_timer(float now)
 
     for (int i = 0; i < count; i++) {
         circle_sprite_t *sprite = globals.sprites[i];
+        if (sprite != player) {
+            sprite_escape(sprite);
+        }
         circle_sprite_move(sprite);
         draw_circle(img, &sprite->circle, &sprite->color);
     }
