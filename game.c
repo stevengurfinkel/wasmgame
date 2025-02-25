@@ -46,6 +46,7 @@ typedef struct cirle_sprite_st
     circle_t circle;
     pixel_t color;
     float vel[DIM];
+    float accel_norm[DIM];
     float mass;
     int damage_count;
 } circle_sprite_t;
@@ -288,8 +289,10 @@ bool circle_sprite_move(circle_sprite_t *sprite)
 void player_move(circle_sprite_t *player)
 {
     keyboard_t *keys = &globals.keyboard;
-    player->vel[X] += PLAYER_ACCEL * keys->dir[X];
-    player->vel[Y] += PLAYER_ACCEL * keys->dir[Y];
+    for (int i = 0; i < DIM; i++) {
+        player->vel[i] += PLAYER_ACCEL * keys->dir[i];
+        player->accel_norm[i] = keys->dir[i];
+    }
 }
 
 void sprite_escape(circle_sprite_t *sprite)
@@ -304,8 +307,12 @@ void sprite_escape(circle_sprite_t *sprite)
     dist = sqrtf(dist);
     if (dist < 2 * (player->circle.r + sprite->circle.r)) {
         for (int i = 0; i < DIM; i++) {
-            sprite->vel[i] += SPRITE_ACCEL * (away[i] / dist);
+            sprite->accel_norm[i] = (away[i] / dist);
+            sprite->vel[i] += SPRITE_ACCEL * sprite->accel_norm[i];
         }
+    }
+    else {
+        sprite->accel_norm[X] = sprite->accel_norm[Y] = 0;
     }
 }
 
@@ -394,6 +401,7 @@ void win_animation_play(image_t *img, circle_sprite_t *player)
         draw_circle(img, &circle, &white);
     }
     else if (frame < 3 * max_radius) {
+        player->circle.r = PLAYER_RADIUS;
         frame -= 2 * max_radius;
         circle.r = max_radius;
         draw_circle(img, &circle, &white);
@@ -402,6 +410,24 @@ void win_animation_play(image_t *img, circle_sprite_t *player)
     }
     else {
         globals.win_frame_id = 0;
+    }
+}
+
+void draw_jet(image_t *img, circle_sprite_t *sprite)
+{
+    float sizes[] = {0.25, 0.30, 0.35};
+    float dist = sprite->circle.r;
+    pixel_t yellow = { .r = 255, .g = 255, .b = 0, .a = 255 };
+
+    for (int i = 0; i < ARRAY_COUNT(sizes); i++) {
+        circle_t jet = {0};
+        sizes[i] *= SPRITE_RADIUS;
+        for (int i = 0; i < DIM; i++) {
+            jet.pos[i] = sprite->circle.pos[i] - dist * sprite->accel_norm[i];
+        }
+        jet.r = sizes[i];
+        draw_circle(img, &jet, &yellow);
+        dist += sizes[i];
     }
 }
 
@@ -431,6 +457,13 @@ void on_timer(float now)
             sprite_escape(sprite);
         }
         circle_sprite_move(sprite);
+        if (globals.win_frame_id == 0) {
+            draw_jet(img, sprite);
+        }
+    }
+
+    for (int i = 0; i < count; i++) {
+        circle_sprite_t *sprite = globals.sprites[i];
         draw_circle(img, &sprite->circle, &sprite->color);
     }
 
