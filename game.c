@@ -66,6 +66,7 @@ typedef struct globals_st
     pixel_t color;
     int collision_count;
     uint64_t frameId;
+    int win_frame_id;
 } globals_t;
 
 static globals_t globals = {0};
@@ -349,6 +350,43 @@ void circle_sprite_collide(circle_sprite_t *s1, circle_sprite_t *s2)
     }
 }
 
+void win_animation_play(image_t *img, circle_sprite_t *player)
+{
+    circle_t circle = {0};
+    pixel_t black = { .r = 0, .g = 0, .b = 0, .a = 255 };
+    pixel_t white = { .r = 255, .g = 255, .b = 255, .a = 255 };
+
+    int thickness = 20;
+    int max_radius = MAX(img->size[X], img->size[Y]);
+    int frame = globals.win_frame_id += 8;
+
+    circle_init(&circle, player->circle.pos[X], player->circle.pos[Y], 0);
+
+    if (frame < max_radius) {
+        circle.r = frame;
+        draw_circle(img, &circle, &white);
+        if (frame > thickness) {
+            circle.r -= thickness;
+        }
+        draw_circle(img, &circle, &black);
+    }
+    else if (frame < 2 * max_radius) {
+        frame -= max_radius;
+        circle.r = frame;
+        draw_circle(img, &circle, &white);
+    }
+    else if (frame < 3 * max_radius) {
+        frame -= 2 * max_radius;
+        circle.r = max_radius;
+        draw_circle(img, &circle, &white);
+        circle.r = frame;
+        draw_circle(img, &circle, &black);
+    }
+    else {
+        globals.win_frame_id = 0;
+    }
+}
+
 void on_timer(float now)
 {
     circle_sprite_t *player = globals.player;
@@ -365,22 +403,35 @@ void on_timer(float now)
     image_t *img = &globals.image;
     image_clear(img);
 
+    if (globals.win_frame_id > 0) {
+        win_animation_play(img, player);
+    }
+
     for (int i = 0; i < count; i++) {
         circle_sprite_t *sprite = globals.sprites[i];
         circle_sprite_move(sprite);
         draw_circle(img, &sprite->circle, &sprite->color);
     }
 
-    globals.sprite_count = 0;
+    int new_count = 0;
     for (int i = 0; i < count; i++) {
         if (globals.sprites[i]->damage_count < SPRITE_MAX_DAMAGE) {
-            globals.sprites[globals.sprite_count++] = globals.sprites[i];
+            globals.sprites[new_count++] = globals.sprites[i];
         }
     }
 
+    // if we just won, start the win animation
+    if (new_count == 1 && globals.sprite_count > 1) {
+        globals.win_frame_id = 1;
+    }
+
+    globals.sprite_count = new_count;
     globals.frameId++;
 }
 
 void on_mousedown(int x, int y)
 {
+    if (globals.sprite_count == 1) {
+        globals.win_frame_id = 1;
+    }
 }
