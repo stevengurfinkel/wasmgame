@@ -13,7 +13,7 @@
 #define PLAYER_RADIUS 36
 #define PLAYER_MASS 2
 
-#define SPRITE_ACCEL 0.10
+#define SPRITE_ACCEL 0.12
 #define SPRITE_RADIUS 24
 #define SPRITE_DIM 6
 #define SPRITE_MAX_DAMAGE 4
@@ -300,12 +300,14 @@ void sprite_escape(circle_sprite_t *sprite)
     circle_sprite_t *player = globals.player;
     float away[DIM];
     float dist = 0;
+    bool player_accel = false;
     for (int i = 0; i < DIM; i++) {
+        player_accel = player_accel || player->accel_norm[i] != 0;
         away[i] = sprite->circle.pos[i] - player->circle.pos[i];
         dist += away[i] * away[i];
     }
     dist = sqrtf(dist);
-    if (dist < 2 * (player->circle.r + sprite->circle.r)) {
+    if (player_accel && dist < 2 * (player->circle.r + sprite->circle.r)) {
         for (int i = 0; i < DIM; i++) {
             sprite->accel_norm[i] = (away[i] / dist);
             sprite->vel[i] += SPRITE_ACCEL * sprite->accel_norm[i];
