@@ -213,18 +213,21 @@ void player_move(circle_sprite_t *player)
 void sprite_escape(circle_sprite_t *sprite)
 {
     circle_sprite_t *player = globals.player;
-    float away[DIM];
+    float vdist[DIM];
     float dist = 0;
+    float dist_dot_vel = 0;
+
     bool player_accel = false;
     for (int i = 0; i < DIM; i++) {
         player_accel = player_accel || player->accel_norm[i] != 0;
-        away[i] = sprite->circle.pos[i] - player->circle.pos[i];
-        dist += away[i] * away[i];
+        vdist[i] = sprite->circle.pos[i] - player->circle.pos[i];
+        dist += vdist[i] * vdist[i];
+        dist_dot_vel += vdist[i] * player->vel[i];
     }
     dist = sqrtf(dist);
-    if (player_accel && dist < 2 * (player->circle.r + sprite->circle.r)) {
+    if (dist_dot_vel > 0 && player_accel && dist < 2 * (player->circle.r + sprite->circle.r)) {
         for (int i = 0; i < DIM; i++) {
-            sprite->accel_norm[i] = (away[i] / dist);
+            sprite->accel_norm[i] = (vdist[i] / dist);
             sprite->vel[i] += SPRITE_ACCEL * sprite->accel_norm[i];
         }
     }
