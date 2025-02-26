@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "wasmlib.h"
+#include "gfx.h"
 
 #define FRAME_RATE 50
 #define LOG_INTERVAL 64
@@ -19,27 +20,11 @@
 #define SPRITE_MAX_DAMAGE 4
 #define SPRITE_COUNT (SPRITE_DIM * SPRITE_DIM)
 
-#define X 0
-#define Y 1
-#define DIM 2
-
-typedef struct image_st
-{
-    pixel_t *pixels;
-    int size[DIM];
-} image_t;
-
 typedef struct keyboard_st
 {
     bool is_pressed[KEY_CODE_COUNT];
     float dir[DIM];
 } keyboard_t;
-
-typedef struct circle_st
-{
-    float pos[DIM];
-    float r;
-} circle_t;
 
 typedef struct cirle_sprite_st
 {
@@ -50,12 +35,6 @@ typedef struct cirle_sprite_st
     float mass;
     int damage_count;
 } circle_sprite_t;
-
-typedef struct rect_st
-{
-    float start[DIM];
-    float size[DIM];
-} rect_t;
 
 typedef struct globals_st
 {
@@ -75,20 +54,7 @@ static globals_t globals = {0};
 
 void spectral_color(pixel_t *p, int bits, int idx);
 
-void circle_init(circle_t *c, float x, float y, float r)
-{
-    c->pos[X] = x;
-    c->pos[Y] = y;
-    c->r = r;
-}
 
-void pixel_init(pixel_t *p, int r, int g, int b, int a)
-{
-    p->r = r;
-    p->g = g;
-    p->b = b;
-    p->a = a;
-}
 
 void image_init(image_t *image, int width, int height)
 {
@@ -135,58 +101,6 @@ void globals_init(int width, int height)
     globals.sprite_count = ARRAY_COUNT(globals.sprites);
     for (int i = 0; i < globals.sprite_count; i++) {
         globals.sprites[i] = &globals.all_sprites[i];
-    }
-}
-
-void draw_rectangle(image_t *img, rect_t *rect, pixel_t *pcolor)
-{
-    pixel_t color = *pcolor;
-    int x_lo = MAX(0, round_down(rect->start[X]));
-    int x_hi = MIN(img->size[X], round_up(rect->start[X] + rect->size[X]));
-
-    int y_lo = MAX(0, round_down(rect->start[Y]));
-    int y_hi = MIN(img->size[Y], round_up(rect->start[Y] + rect->size[Y]));
-
-    for (int i = y_lo; i < y_hi; i++) {
-        for (int j = x_lo; j < x_hi; j++) {
-            pixel_t *p = &img->pixels[i * img->size[X] + j];
-            *p = color;
-        }
-    }
-}
-
-void image_clear(image_t *img)
-{
-    pixel_t p = { .r = 0, .g = 0, .b = 0, .a = 255 };
-    for (int i = 0; i < img->size[X] * img->size[Y]; i++) {
-        img->pixels[i] = p;
-    }
-}
-
-void draw_circle(image_t *img, circle_t *c, pixel_t *pcolor)
-{
-    pixel_t color = *pcolor;
-
-    int lo[DIM];
-    int hi[DIM];
-
-    float r2 = c->r * c->r;
-
-    for (int i = 0; i < DIM; i++) {
-        lo[i] = MAX(0, round_down(c->pos[i] - c->r));
-        hi[i] = MIN(img->size[i], round_up(c->pos[i] + c->r));
-    }
-
-    for (int i = lo[Y]; i < hi[Y]; i++) {
-        float y2 = (i - c->pos[Y]) * (i - c->pos[Y]);
-
-        for (int j = lo[X]; j < hi[X]; j++) {
-            float x2 = (j - c->pos[X]) * (j - c->pos[X]);
-            pixel_t *p = &img->pixels[i * img->size[X] + j];
-            if (x2 + y2 < r2) {
-                *p = color;
-            }
-        }
     }
 }
 

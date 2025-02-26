@@ -4,7 +4,7 @@ CC_WASM := clang
 CCFLAGS_WASM := $(CCFLAGS) -O2 --target=wasm32
 LDFLAGS_WASM := -nostdlib -Wl,--no-entry -Wl,--export-all -Wl,--allow-undefined, -Wl,--fatal-warnings
 
-WASM_FILES := game.c wasmlib.c
+WASM_FILES := game.c wasmlib.c gfx.c
 
 .PHONY: all
 all: game.js embed

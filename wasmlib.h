@@ -1,5 +1,8 @@
 #pragma once
 
+#include <stdint.h>
+#include <stddef.h>
+
 // C standard library
 size_t strlen(const char *s);
 void *memset(void *s, int c, size_t n);
