@@ -384,18 +384,15 @@ void on_timer(float now)
     }
 
     int new_count = 0;
-    float removed_mass = 0;
     for (int i = 0; i < count; i++) {
         circle_sprite_t *sprite = globals.sprites[i];
         if (sprite->damage_count < SPRITE_MAX_DAMAGE) {
             globals.sprites[new_count++] = sprite;
         }
-        else {
-            removed_mass += sprite->mass;
-        }
     }
 
-    player->mass = PLAYER_MASS + removed_mass;
+    // add all the removed sprite's mass to the player's mass
+    player->mass = PLAYER_MASS + (ARRAY_COUNT(globals.sprites) - new_count);
 
     // if we just won, start the win animation
     if (new_count == 1 && globals.sprite_count > 1) {
