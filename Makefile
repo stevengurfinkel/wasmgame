@@ -1,8 +1,11 @@
 CCFLAGS := -Wall -Werror
-
 CC_WASM := clang
+
+WASM_EXPORTS := on_mousedown on_keydown on_keyup on_timer globals_init
+WASM_EXPORTS_FLAGS := $(foreach f,$(WASM_EXPORTS),-Wl,--export,$(f))
+
 CCFLAGS_WASM := $(CCFLAGS) -O2 --target=wasm32
-LDFLAGS_WASM := -nostdlib -Wl,--no-entry -Wl,--export-all -Wl,--allow-undefined, -Wl,--fatal-warnings
+LDFLAGS_WASM := -nostdlib -Wl,--no-entry $(WASM_EXPORTS_FLAGS) -Wl,--import-undefined, -Wl,--fatal-warnings
 
 WASM_FILES := game.c wasmlib.c gfx.c
 
