@@ -39,14 +39,15 @@ typedef struct cirle_sprite_st
 typedef struct globals_st
 {
     image_t image;
+    keyboard_t keyboard;
+
     circle_sprite_t *player;
+
     int sprite_count;
     circle_sprite_t *sprites[SPRITE_COUNT + 1];
     circle_sprite_t all_sprites[SPRITE_COUNT + 1];
-    keyboard_t keyboard;
-    pixel_t color;
-    int collision_count;
-    uint64_t frameId;
+
+    uint64_t frame_id;
     int win_frame_id;
 } globals_t;
 
@@ -400,7 +401,7 @@ void on_timer(float now)
     }
 
     globals.sprite_count = new_count;
-    globals.frameId++;
+    globals.frame_id++;
 }
 
 void on_mousedown(int x, int y)
