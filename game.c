@@ -305,24 +305,24 @@ void win_animation_play(image_t *img, circle_sprite_t *player)
 
     if (frame < max_radius) {
         circle.r = frame;
-        draw_circle(img, &circle, &white);
+        image_draw_circle(img, &circle, &white);
         if (frame > thickness) {
             circle.r -= thickness;
         }
-        draw_circle(img, &circle, &black);
+        image_draw_circle(img, &circle, &black);
     }
     else if (frame < 2 * max_radius) {
         frame -= max_radius;
         circle.r = frame;
-        draw_circle(img, &circle, &white);
+        image_draw_circle(img, &circle, &white);
     }
     else if (frame < 3 * max_radius) {
         player->circle.r = PLAYER_RADIUS;
         frame -= 2 * max_radius;
         circle.r = max_radius;
-        draw_circle(img, &circle, &white);
+        image_draw_circle(img, &circle, &white);
         circle.r = frame;
-        draw_circle(img, &circle, &black);
+        image_draw_circle(img, &circle, &black);
     }
     else {
         globals.win_frame_id = 0;
@@ -342,7 +342,7 @@ void draw_jet(image_t *img, circle_sprite_t *sprite)
             jet.pos[i] = sprite->circle.pos[i] - dist * sprite->accel_norm[i];
         }
         jet.r = sizes[i];
-        draw_circle(img, &jet, &yellow);
+        image_draw_circle(img, &jet, &yellow);
         dist += sizes[i];
     }
 }
@@ -380,7 +380,7 @@ void on_timer(float now)
 
     for (int i = 0; i < count; i++) {
         circle_sprite_t *sprite = globals.sprites[i];
-        draw_circle(img, &sprite->circle, &sprite->color);
+        image_draw_circle(img, &sprite->circle, &sprite->color);
     }
 
     int new_count = 0;

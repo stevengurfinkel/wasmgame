@@ -33,6 +33,6 @@ typedef struct rect_st
 void circle_init(circle_t *c, float x, float y, float r);
 void pixel_init(pixel_t *p, int r, int g, int b, int a);
 void image_draw_bitmap(image_t *img, const int *offset, const bitmap_t *bmp);
-void draw_rectangle(image_t *img, rect_t *rect, pixel_t *pcolor);
+void image_draw_rectangle(image_t *img, rect_t *rect, pixel_t *pcolor);
+void image_draw_circle(image_t *img, circle_t *c, pixel_t *pcolor);
 void image_clear(image_t *img);
-void draw_circle(image_t *img, circle_t *c, pixel_t *pcolor);

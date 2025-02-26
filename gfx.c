@@ -35,7 +35,7 @@ void image_draw_bitmap(image_t *img, const int *offset, const bitmap_t *bmp)
     }
 }
 
-void draw_rectangle(image_t *img, rect_t *rect, pixel_t *pcolor)
+void image_draw_rectangle(image_t *img, rect_t *rect, pixel_t *pcolor)
 {
     pixel_t color = *pcolor;
     int x_lo = MAX(0, round_down(rect->start[X]));
@@ -60,7 +60,7 @@ void image_clear(image_t *img)
     }
 }
 
-void draw_circle(image_t *img, circle_t *c, pixel_t *pcolor)
+void image_draw_circle(image_t *img, circle_t *c, pixel_t *pcolor)
 {
     pixel_t color = *pcolor;
 
