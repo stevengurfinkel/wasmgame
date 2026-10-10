@@ -20,20 +20,60 @@ void *memset(void *s, int c, size_t n)
     return s;
 }
 
+float sqrtf(float f)
+{
+    float out;
+    asm (
+        "local.get %1\n"
+        "f32.sqrt\n"
+        "local.set %0\n"
+        : "=r"(out)
+        : "r"(f)
+    );
+    return out;
+}
+
 float fabsf(float x)
 {
-    return x >= 0 ? x : -x;
+    float out;
+    asm (
+        "local.get %1\n"
+        "f32.abs\n"
+        "local.set %0\n"
+        : "=r"(out)
+        : "r"(x)
+    );
+
+    return out;
 }
 
 int round_down(float f)
 {
-    return (int)f;
+    int out;
+    asm (
+        "local.get %1\n"
+        "f32.floor\n"
+        "i32.trunc_f32_s\n"
+        "local.set %0\n"
+        : "=r"(out)
+        : "r"(f)
+    );
+
+    return out;
 }
 
 int round_up(float f)
 {
-    int i = round_down(f);
-    return i + (i != f);
+    int out;
+    asm (
+        "local.get %1\n"
+        "f32.ceil\n"
+        "i32.trunc_f32_s\n"
+        "local.set %0\n"
+        : "=r"(out)
+        : "r"(f)
+    );
+    return out;
 }
 
 void log_str(const char *msg)
