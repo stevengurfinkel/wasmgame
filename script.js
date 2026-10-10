@@ -43,13 +43,6 @@ function onInterval()
     wasmPaint();
 }
 
-function wasmMemoryGrow(page_count)
-{
-    let len = wasm.memory.buffer.byteLength;
-    wasm.memory.grow(page_count);
-    return len;
-}
-
 function wasmSetImageBuffer(ptr)
 {
     pixelOffset = ptr;
@@ -72,8 +65,7 @@ function wasmLogStrWithSize(msg, size)
 
 function wasmInit()
 {
-    let imports = {"env": {"memory_grow_pages" : wasmMemoryGrow,
-                           "set_image_buffer": wasmSetImageBuffer,
+    let imports = {"env": {"set_image_buffer": wasmSetImageBuffer,
                            "set_timer_interval": wasmSetTimerInterval,
                            "log_float": console.log,
                            "log_int": console.log,

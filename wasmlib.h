@@ -14,12 +14,16 @@ float sqrtf(float x);
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define ARRAY_COUNT(array) (sizeof (array) / sizeof (array)[0])
 
+#define PAGE_BITS 16
+#define PAGE_SIZE (1 << 16) // 64k
+#define PAGE_MASK (PAGE_SIZE - 1)
+
+void *memory_alloc(size_t bytes);
 void log_str(const char *msg);
 int round_down(float f);
 int round_up(float f);
 
 // Implemented in javascript
-#define PAGE_SIZE (64 * 1024)
 
 #define KEY_CODE_ARROW_LEFT 37
 #define KEY_CODE_ARROW_UP 38
@@ -36,7 +40,6 @@ typedef struct pixel_st
 } pixel_t;
 
 void set_image_buffer(pixel_t *pixels);
-void *memory_grow_pages(size_t bytes);
 void log_int(long value);
 void log_float(float value);
 void log_i64(int64_t value);

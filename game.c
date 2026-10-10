@@ -63,9 +63,8 @@ void image_init(image_t *image, int width, int height)
     image->size[Y] = height;
 
     size_t size = width * height * sizeof image->pixels[0];
-    size_t page_count = (size + PAGE_SIZE) / PAGE_SIZE;
 
-    image->pixels = memory_grow_pages(page_count);
+    image->pixels = memory_alloc(size);
     set_image_buffer(image->pixels);
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {

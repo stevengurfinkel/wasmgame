@@ -76,6 +76,30 @@ int round_up(float f)
     return out;
 }
 
+static size_t memory_grow_pages(size_t pages_to_add)
+{
+    size_t old_page_count;
+    asm (
+        "local.get %1\n"
+        "memory.grow 0\n"
+        "local.set %0\n"
+        : "=r"(old_page_count)
+        : "r"(pages_to_add)
+    );
+    return old_page_count;
+}
+
+void *memory_alloc(size_t bytes)
+{
+    bytes = (bytes + PAGE_MASK) & ~PAGE_MASK; // round up to PAGE_SIZE
+    int old_page_count = memory_grow_pages(bytes >> PAGE_BITS);
+    if (old_page_count < 0) {
+        return NULL;
+    }
+
+    return (char *)(old_page_count * PAGE_SIZE);
+}
+
 void log_str(const char *msg)
 {
     log_str_with_size(msg, strlen(msg));
