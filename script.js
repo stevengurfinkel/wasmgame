@@ -1,11 +1,11 @@
-let canvas = null;
+let ctx_2d = null;
 let timer = null;
 let wasm = null;
 let imageData = null;
 
 function wasmPaint()
 {
-    canvas.getContext("2d").putImageData(imageData, 0, 0);
+    ctx_2d.putImageData(imageData, 0, 0);
 }
 
 function onMousedown(e)
@@ -77,7 +77,7 @@ function wasmInit()
 
 function start(event)
 {
-    canvas = document.getElementById("canvas");
-    canvas.getContext("2d").fillRect(0, 0, canvas.width, canvas.height);
+    ctx_2d = document.getElementById("canvas").getContext("2d");
+    ctx_2d.fillRect(0, 0, canvas.width, canvas.height);
     wasmInit();
 }
