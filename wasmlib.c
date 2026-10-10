@@ -79,7 +79,7 @@ int round_up(float f)
 static size_t memory_grow_pages(size_t pages_to_add)
 {
     size_t old_page_count;
-    asm (
+    asm volatile (
         "local.get %1\n"
         "memory.grow 0\n"
         "local.set %0\n"

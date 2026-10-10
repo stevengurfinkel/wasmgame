@@ -1,13 +1,11 @@
 let canvas = null;
 let timer = null;
-let pixelOffset = 0;
 let wasm = null;
+let imageData = null;
 
 function wasmPaint()
 {
-    let byteCount = 4 * canvas.width * canvas.height;
-    let pixels = new Uint8ClampedArray(wasm.memory.buffer, pixelOffset, byteCount);
-    canvas.getContext("2d").putImageData(new ImageData(pixels, canvas.width, canvas.height), 0, 0);
+    canvas.getContext("2d").putImageData(imageData, 0, 0);
 }
 
 function onMousedown(e)
@@ -43,9 +41,11 @@ function onInterval()
     wasmPaint();
 }
 
-function wasmSetImageBuffer(ptr)
+function wasmSetImageBuffer(pixelOffset)
 {
-    pixelOffset = ptr;
+    let byteCount = 4 * canvas.width * canvas.height;
+    let pixels = new Uint8ClampedArray(wasm.memory.buffer, pixelOffset, byteCount);
+    imageData = new ImageData(pixels, canvas.width, canvas.height);
 }
 
 function wasmInitWithInst(inst)
